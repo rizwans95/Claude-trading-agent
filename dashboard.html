@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Agent V3</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #080c10; --surface: #0d1219; --surface-2: #141c26; --surface-3: #1c2633;
+  --border: rgba(255,255,255,0.07); --border-hi: rgba(255,255,255,0.18);
+  --text-primary: #e8edf2; --text-secondary: #8eaabf; --text-dim: #4a6480;
+  --title: #a8c4d8;
+  --long: #00d88a; --long-bg: rgba(0,216,138,0.08); --long-border: rgba(0,216,138,0.22);
+  --short: #ff4d6d; --short-bg: rgba(255,77,109,0.08); --short-border: rgba(255,77,109,0.22);
+  --neutral: #5a7799; --neutral-bg: rgba(90,119,153,0.08); --neutral-border: rgba(90,119,153,0.2);
+  --amber: #f5a623; --amber-bg: rgba(245,166,35,0.08); --amber-border: rgba(245,166,35,0.2);
+  --pass: #00d88a; --warn: #f5a623; --fail: #ff4d6d;
+  --mono: 'JetBrains Mono', monospace; --display: 'Syne', sans-serif;
+}
+body { background:var(--bg); color:var(--text-primary); font-family:var(--mono); font-size:13px; min-height:100vh; display:flex; flex-direction:column; }
+
+header { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--bg); position:sticky; top:0; z-index:100; }
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-mark { width:28px; height:28px; border:1.5px solid var(--text-dim); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; font-size:13px; color:var(--text-secondary); }
+.logo-text { font-family:var(--display); font-weight:600; font-size:14px; color:var(--text-primary); }
+.logo-v { font-size:10px; color:var(--text-dim); letter-spacing:1px; margin-left:2px; }
+.header-right { display:flex; align-items:center; gap:16px; }
+.live-pill { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--neutral); }
+.live-dot.on { background:var(--long); box-shadow:0 0 0 2px rgba(0,216,138,0.2); animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+#last-update { font-size:10px; color:var(--text-dim); }
+
+.asset-bar { display:flex; align-items:center; gap:10px; padding:10px 28px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+.asset-bar label { font-size:10px; color:var(--title); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
+.asset-bar select, .asset-bar input { background:var(--surface-2); border:1px solid var(--border-hi); border-radius:5px; color:var(--text-primary); font-family:var(--mono); font-size:12px; padding:5px 10px; outline:none; cursor:pointer; }
+.asset-bar select:hover { border-color:rgba(255,255,255,0.3); }
+.type-btns { display:flex; gap:4px; }
+.type-btn { padding:4px 11px; border:1px solid var(--border-hi); border-radius:4px; background:transparent; color:var(--text-secondary); font-family:var(--mono); font-size:11px; cursor:pointer; transition:all .15s; }
+.type-btn.active { background:var(--surface-3); color:var(--text-primary); border-color:rgba(255,255,255,0.3); }
+.asset-display-pill { margin-left:auto; padding:4px 12px; border-radius:4px; background:var(--surface-3); border:1px solid var(--border); font-size:11px; color:var(--text-secondary); white-space:nowrap; }
+#current-asset-display { color:var(--text-primary); font-weight:500; }
+.data-note { font-size:10px; color:var(--text-dim); white-space:nowrap; }
+
+main { flex:1; display:grid; grid-template-columns:258px 1fr 268px; gap:0; max-width:1380px; width:100%; margin:0 auto; padding:20px 28px; }
+.left-col, .right-col { display:flex; flex-direction:column; gap:14px; }
+.signal-col { padding:0 20px; display:flex; flex-direction:column; gap:14px; }
+
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.panel-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); }
+.panel-title { font-size:10px; font-weight:600; color:var(--title); letter-spacing:1.5px; text-transform:uppercase; }
+.panel-badge { font-size:10px; padding:2px 8px; border-radius:3px; font-weight:500; }
+.panel-body { padding:14px; }
+
+.dd-section { border-top:1px solid var(--border); }
+.dd-trigger { display:flex; align-items:center; justify-content:space-between; padding:9px 14px; cursor:pointer; user-select:none; transition:background .15s; }
+.dd-trigger:hover { background:var(--surface-2); }
+.dd-trigger-label { font-size:10px; font-weight:600; color:var(--title); letter-spacing:1.2px; text-transform:uppercase; }
+.dd-arrow { font-size:10px; color:var(--text-dim); transition:transform .2s; }
+.dd-arrow.open { transform:rotate(180deg); }
+.dd-body { display:none; padding:10px 14px 13px; background:var(--surface-2); font-size:11px; color:var(--text-secondary); line-height:1.75; }
+.dd-body.open { display:block; }
+.dd-body p { margin-bottom:6px; }
+.dd-body p:last-child { margin-bottom:0; }
+
+.legend-row { display:flex; gap:8px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.legend-row:last-child { border-bottom:none; }
+.legend-key { font-size:10px; font-weight:600; min-width:74px; flex-shrink:0; padding-top:1px; }
+.legend-desc { font-size:11px; color:var(--text-secondary); line-height:1.65; }
+
+.signal-main { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.signal-bar { height:3px; background:var(--neutral); transition:background .4s; }
+.signal-bar.long { background:var(--long); }
+.signal-bar.short { background:var(--short); }
+.signal-core { padding:22px 24px 14px; text-align:center; }
+.sig-asset { font-family:var(--display); font-size:12px; color:var(--title); letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+.sig-tf { font-size:10px; color:var(--text-dim); margin-bottom:12px; }
+.sig-dir { font-family:var(--display); font-size:48px; font-weight:700; letter-spacing:-1px; line-height:1; color:var(--neutral); transition:color .4s; margin-bottom:8px; }
+.sig-dir.long { color:var(--long); }
+.sig-dir.short { color:var(--short); }
+.grade-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px; }
+.grade-pill { font-family:var(--display); font-size:12px; font-weight:600; padding:4px 14px; border-radius:4px; letter-spacing:.8px; background:var(--neutral-bg); color:var(--neutral); border:1px solid var(--neutral-border); }
+.grade-pill.long { background:var(--long-bg); color:var(--long); border-color:var(--long-border); }
+.grade-pill.short { background:var(--short-bg); color:var(--short); border-color:var(--short-border); }
+.regime-mini { font-size:10px; padding:4px 10px; border-radius:3px; background:var(--surface-2); color:var(--text-secondary); border:1px solid var(--border); }
+.conf-wrap { padding:0 24px 16px; }
+.conf-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px; }
+.conf-label { font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; }
+.conf-val { font-family:var(--display); font-size:20px; font-weight:700; }
+.conf-val span { font-size:12px; font-weight:400; color:var(--text-dim); }
+.meter-track { height:4px; background:var(--surface-3); border-radius:2px; overflow:hidden; }
+.meter-fill { height:100%; border-radius:2px; background:var(--neutral); transition:width .6s cubic-bezier(.4,0,.2,1), background .4s; }
+.meter-fill.long { background:var(--long); }
+.meter-fill.short { background:var(--short); }
+.conf-sub { margin-top:6px; font-size:10px; color:var(--text-dim); text-align:right; }
+.status-bar { display:flex; align-items:center; justify-content:space-between; padding:6px 14px; background:var(--surface-2); border-top:1px solid var(--border); font-size:10px; color:var(--text-dim); }
+
+.score-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
+.score-row:last-child { border-bottom:none; }
+.score-label { width:84px; font-size:10px; color:var(--text-secondary); flex-shrink:0; }
+.score-track { flex:1; height:3px; background:var(--surface-3); border-radius:2px; overflow:hidden; }
+.score-fill { height:100%; border-radius:2px; background:var(--neutral); transition:width .5s; }
+.score-fill.pos { background:var(--long); }
+.score-fill.neg { background:var(--short); }
+.score-num { width:28px; text-align:right; font-size:11px; color:var(--text-secondary); flex-shrink:0; }
+
+.audit-pills { display:flex; gap:5px; flex-wrap:wrap; padding:9px 14px; border-bottom:1px solid var(--border); }
+.a-pill { display:flex; align-items:center; gap:4px; padding:3px 9px; border-radius:4px; font-size:10px; font-weight:500; border:1px solid transparent; }
+.a-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.a-pill.pass { background:rgba(0,216,138,.07); color:#6feac0; border-color:rgba(0,216,138,.15); }
+.a-pill.pass .a-dot { background:var(--pass); }
+.a-pill.warn { background:rgba(245,166,35,.07); color:#f5c060; border-color:rgba(245,166,35,.15); }
+.a-pill.warn .a-dot { background:var(--warn); }
+.a-pill.fail { background:rgba(255,77,109,.07); color:#ff8096; border-color:rgba(255,77,109,.15); }
+.a-pill.fail .a-dot { background:var(--fail); }
+.audit-overall { font-size:10px; padding:2px 8px; border-radius:3px; font-weight:600; }
+.audit-overall.pass { background:rgba(0,216,138,.1); color:var(--pass); }
+.audit-overall.warn { background:rgba(245,166,35,.1); color:var(--warn); }
+
+/* ── SERVER STATUS PILL ─────────────────────────────────── */
+.server-pill { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text-dim); padding:3px 9px; border-radius:3px; border:1px solid var(--border); cursor:default; }
+.srv-dot { width:5px; height:5px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background .3s; }
+.srv-dot.online  { background:var(--long);  box-shadow:0 0 0 2px rgba(0,216,138,.15); }
+.srv-dot.offline { background:var(--short); }
+
+/* ── RECORD + EXPORT BUTTONS ────────────────────────────── */
+.record-btn { width:100%; margin-top:8px; padding:10px; background:rgba(0,216,138,0.07); border:1px solid var(--long-border); border-radius:7px; color:var(--long); font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:1px; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:7px; }
+.record-btn:hover:not(:disabled) { background:rgba(0,216,138,0.14); }
+.record-btn:disabled { opacity:.35; cursor:not-allowed; }
+.export-btn { flex:1; padding:8px; background:rgba(0,212,255,0.07); border:1px solid rgba(0,212,255,0.2); border-radius:6px; color:#00d4ff; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.8px; cursor:pointer; transition:all .15s; }
+.export-btn:hover { background:rgba(0,212,255,0.13); }
+.clear-btn  { padding:8px 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); font-family:var(--mono); font-size:10px; cursor:pointer; }
+.clear-btn:hover { color:var(--short); border-color:var(--short-border); }
+
+/* ── TRADE MEMORY PANEL ─────────────────────────────────── */
+.tm-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px 14px; border-bottom:1px solid var(--border); }
+.tm-stat { text-align:center; }
+.tm-stat-val { font-family:var(--display); font-size:18px; font-weight:700; color:var(--text-primary); line-height:1; }
+.tm-stat-val.good { color:var(--long); }
+.tm-stat-val.bad  { color:var(--short); }
+.tm-stat-label { font-size:9px; color:var(--text-dim); letter-spacing:1px; margin-top:3px; }
+.tm-item { display:flex; align-items:center; gap:6px; padding:5px 14px; border-bottom:1px solid rgba(255,255,255,0.03); font-size:10px; }
+.tm-item:last-child { border-bottom:none; }
+.tm-dir { font-weight:600; min-width:40px; font-size:10px; }
+.tm-dir.LONG     { color:var(--long); }
+.tm-dir.SHORT    { color:var(--short); }
+.tm-dir.NT       { color:var(--text-dim); }
+.tm-sym  { color:var(--text-dim); font-size:9px; flex:1; }
+.tm-grade { font-size:9px; color:var(--text-secondary); }
+.tm-outcome { margin-left:auto; font-weight:600; font-size:9px; padding:1px 6px; border-radius:3px; }
+.tm-outcome.WIN       { color:var(--long);   background:var(--long-bg); }
+.tm-outcome.LOSS      { color:var(--short);  background:var(--short-bg); }
+.tm-outcome.PENDING   { color:var(--amber);  background:var(--amber-bg); }
+.tm-outcome.BREAKEVEN { color:var(--text-dim); background:var(--surface-2); }
+.tm-footer { display:flex; gap:6px; padding:10px 14px; border-top:1px solid var(--border); }
+
+/* ── RECORD MODAL ───────────────────────────────────────── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.modal-overlay.open { display:flex; }
+.modal-box { background:var(--surface); border:1px solid var(--border-hi); border-radius:12px; width:430px; max-width:95vw; box-shadow:0 24px 60px rgba(0,0,0,.6); }
+.modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
+.modal-title { font-size:11px; font-weight:600; color:var(--title); letter-spacing:1.5px; text-transform:uppercase; }
+.modal-close { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:18px; line-height:1; padding:0 4px; }
+.modal-close:hover { color:var(--text-primary); }
+.modal-body { padding:16px 18px; display:flex; flex-direction:column; gap:11px; }
+.modal-sig-row { display:flex; gap:8px; padding:9px 12px; background:var(--surface-2); border-radius:6px; border:1px solid var(--border); align-items:center; flex-wrap:wrap; }
+.modal-sig-lbl { font-size:9px; color:var(--text-dim); letter-spacing:1px; min-width:52px; }
+.modal-sig-val { font-size:11px; font-weight:600; color:var(--text-primary); }
+.modal-sig-val.long  { color:var(--long); }
+.modal-sig-val.short { color:var(--short); }
+.f-row { display:flex; flex-direction:column; gap:4px; }
+.f-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.f-label { font-size:9px; color:var(--title); letter-spacing:1px; text-transform:uppercase; }
+.f-input,.f-sel { background:var(--surface-2); border:1px solid var(--border-hi); border-radius:5px; color:var(--text-primary); font-family:var(--mono); font-size:12px; padding:7px 10px; outline:none; width:100%; }
+.f-input:focus,.f-sel:focus { border-color:rgba(0,212,255,0.4); }
+.modal-ftr { display:flex; gap:8px; padding:14px 18px; border-top:1px solid var(--border); }
+.btn-save   { flex:1; padding:9px; background:rgba(0,216,138,.1); border:1px solid var(--long-border); border-radius:6px; color:var(--long); font-family:var(--mono); font-size:11px; font-weight:600; cursor:pointer; }
+.btn-save:hover { background:rgba(0,216,138,.18); }
+.btn-cancel { padding:9px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); font-family:var(--mono); font-size:11px; cursor:pointer; }
+.btn-cancel:hover { color:var(--text-primary); }
+.audit-overall.fail { background:rgba(255,77,109,.1); color:var(--fail); }
+.adi { display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; }
+.adi:last-child { margin-bottom:0; }
+.adi-icon { font-size:10px; margin-top:2px; flex-shrink:0; }
+.adi-icon.pass { color:var(--pass); }
+.adi-icon.warn { color:var(--warn); }
+.adi-icon.fail { color:var(--fail); }
+.adi-text { font-size:11px; color:var(--text-secondary); line-height:1.65; }
+.integrity-row { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-top:1px solid var(--border); background:var(--surface-2); }
+.integrity-label { font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; }
+.integrity-val { font-family:var(--display); font-size:13px; font-weight:600; }
+
+.reason-item { display:flex; gap:7px; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--border); font-size:11px; color:var(--text-secondary); line-height:1.6; }
+.reason-item:last-child { border-bottom:none; }
+.r-dot { width:4px; height:4px; border-radius:50%; background:var(--text-dim); flex-shrink:0; margin-top:5px; }
+.conflict-item { display:flex; gap:7px; padding:5px 0; font-size:11px; color:#f5c060; line-height:1.6; }
+.conflict-item::before { content:'⚠'; flex-shrink:0; }
+
+.entry-text { font-size:11px; color:var(--text-secondary); line-height:1.8; padding:4px 0; }
+
+.risk-pill { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:600; margin-bottom:8px; }
+.risk-pill.LOW { background:var(--long-bg); color:var(--long); border:1px solid var(--long-border); }
+.risk-pill.MEDIUM { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-border); }
+.risk-pill.HIGH { background:var(--short-bg); color:var(--short); border:1px solid var(--short-border); }
+
+.cal-pct { font-family:var(--display); font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+.cal-sub { font-size:10px; color:var(--text-dim); margin-bottom:8px; }
+.cal-note { font-size:11px; color:var(--text-secondary); line-height:1.75; }
+.cal-tag { display:inline-block; margin-top:7px; font-size:10px; padding:2px 8px; border-radius:3px; background:var(--surface-3); color:var(--text-dim); border:1px solid var(--border); }
+
+.mem-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.mem-item:last-child { border-bottom:none; }
+.mem-dir { font-weight:500; }
+.mem-dir.LONG { color:var(--long); }
+.mem-dir.SHORT { color:var(--short); }
+.mem-dir.NT { color:var(--neutral); }
+.mem-grade { font-size:10px; padding:1px 6px; border-radius:3px; background:var(--surface-3); color:var(--text-dim); }
+.empty-state { padding:14px; text-align:center; font-size:11px; color:var(--text-dim); }
+
+.refresh-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:11px; background:transparent; border:1px solid var(--border-hi); border-radius:8px; color:var(--text-secondary); font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .2s; }
+.refresh-btn:hover { background:var(--surface-2); color:var(--text-primary); }
+.refresh-btn:active { transform:scale(.98); }
+.refresh-btn.loading { color:var(--text-dim); pointer-events:none; }
+@keyframes spin { to{transform:rotate(360deg);} }
+.spin { display:inline-block; animation:spin .8s linear infinite; }
+
+.error-banner { display:none; padding:9px 14px; background:rgba(255,77,109,.07); border:1px solid rgba(255,77,109,.2); border-radius:7px; font-size:11px; color:#ff8096; }
+.regime-name { font-family:var(--display); font-size:15px; font-weight:600; margin-bottom:3px; }
+.regime-desc { font-size:10px; color:var(--text-dim); margin-bottom:10px; line-height:1.5; }
+.rc-row { display:flex; align-items:center; gap:7px; font-size:10px; color:var(--text-dim); }
+.rc-track { flex:1; height:2px; background:var(--surface-3); border-radius:1px; overflow:hidden; }
+.rc-fill { height:100%; background:var(--amber); border-radius:1px; transition:width .4s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">T</div>
+    <div><span class="logo-text">TRADING AGENT</span> <span class="logo-v">V3</span></div>
+  </div>
+  <div class="header-right">
+    <div class="server-pill" title="FastAPI backend — start with start_server.bat">
+      <div class="srv-dot" id="srv-dot"></div>
+      <span id="srv-label">SERVER —</span>
+    </div>
+    <div class="live-pill"><div class="live-dot" id="live-dot"></div><span id="live-status">IDLE</span></div>
+    <div id="last-update">—</div>
+  </div>
+</header>
+
+<!-- ASSET SELECTOR -->
+<div class="asset-bar">
+  <label>TYPE</label>
+  <div class="type-btns">
+    <button class="type-btn active" onclick="setType('stocks',this)">STOCKS</button>
+    <button class="type-btn" onclick="setType('crypto',this)">CRYPTO</button>
+    <button class="type-btn" onclick="setType('forex',this)">FOREX</button>
+    <button class="type-btn" onclick="setType('futures',this)">FUTURES</button>
+    <button class="type-btn" onclick="setType('commodities',this)">COMMODITIES</button>
+  </div>
+  <label>SYMBOL</label>
+  <select id="sym-sel" onchange="onSymChange()">
+    <option value="AAPL">AAPL — Apple</option>
+    <option value="SPY">SPY — S&amp;P 500 ETF</option>
+    <option value="TSLA">TSLA — Tesla</option>
+    <option value="NVDA">NVDA — NVIDIA</option>
+    <option value="MSFT">MSFT — Microsoft</option>
+    <option value="AMZN">AMZN — Amazon</option>
+    <option value="QQQ">QQQ — Nasdaq ETF</option>
+    <option value="custom">Custom…</option>
+  </select>
+  <input type="text" id="custom-sym" placeholder="e.g. GOOG" style="display:none;width:100px;" oninput="curSym=this.value.toUpperCase()">
+  <label>TIMEFRAME</label>
+  <select id="tf-sel" onchange="curTF=this.value;updatePill()">
+    <option value="1m">1 min</option>
+    <option value="5m" selected>5 min</option>
+    <option value="15m">15 min</option>
+    <option value="30m">30 min</option>
+    <option value="1h">1 hour</option>
+    <option value="4h">4 hour</option>
+    <option value="1d">Daily</option>
+  </select>
+  <div class="asset-display-pill">Analyzing: <span id="cur-asset-pill">—</span></div>
+  <span class="data-note">⚡ Yahoo Finance · refreshes every 60s</span>
+</div>
+
+<main>
+
+<!-- LEFT -->
+<div class="left-col">
+
+  <!-- Regime -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">MARKET REGIME</span>
+      <span class="panel-badge" id="regime-badge" style="background:var(--surface-3);color:var(--text-dim);">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="regime-name" id="regime-name">—</div>
+      <div class="regime-desc" id="regime-desc">Awaiting signal</div>
+      <div class="rc-row"><span>CONF</span><div class="rc-track"><div class="rc-fill" id="rc-fill" style="width:0%"></div></div><span id="rc-val">—</span></div>
+    </div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">REGIME TYPES EXPLAINED</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <div class="legend-row"><span class="legend-key" style="color:#5ab4e0;">TRENDING</span><span class="legend-desc">Price has been accepted outside the Value Area with normal or expanding volatility. Directional signals (ZigZag, Trend Speed, CVD) carry their full weight.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:#a8c4d8;">RANGING</span><span class="legend-desc">Price is oscillating inside the Value Area. Location signals (POC, VAH, VAL) matter most. Momentum signals are less reliable. Expect two-sided, mean-reverting price action.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:#00d88a;">BREAKOUT</span><span class="legend-desc">Volatility was compressing and is now expanding, with price outside the Value Area. Fast-moving environment — momentum signals carry more weight, but fakeout risk is elevated until the move is confirmed on close.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:#c084fc;">REVERSAL</span><span class="legend-desc">Price has moved significantly away from the Point of Control (POC) and CVD divergence is present — volume is not supporting the current price direction. This signals the existing trend may be running out of fuel and a move back toward POC is likely. New entries in the trend direction carry elevated risk. Monitor existing positions closely.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:#ff4d6d;">EXHAUSTION</span><span class="legend-desc">ATR has spiked into the top 10% of its historical range. This signals a late, overextended move. Avoid new entries regardless of signal direction. Reversal risk is elevated.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:#f5a623;">UNCERTAIN</span><span class="legend-desc">Market context cannot be cleanly classified from volatility and location alone. All signal confidence is penalized. Only setups scoring above 80 will generate a trade output.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Breakdown -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">SCORE BREAKDOWN</span>
+      <span class="panel-badge" id="score-total" style="background:var(--surface-3);color:var(--text-dim);">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="score-row"><span class="score-label">STRUCTURE</span><div class="score-track"><div class="score-fill" id="sf-st" style="width:0%"></div></div><span class="score-num" id="sv-st">—</span></div>
+      <div class="score-row"><span class="score-label">LOCATION</span><div class="score-track"><div class="score-fill" id="sf-lo" style="width:0%"></div></div><span class="score-num" id="sv-lo">—</span></div>
+      <div class="score-row"><span class="score-label">MOMENTUM</span><div class="score-track"><div class="score-fill" id="sf-mo" style="width:0%"></div></div><span class="score-num" id="sv-mo">—</span></div>
+      <div class="score-row"><span class="score-label">ORDER FLOW</span><div class="score-track"><div class="score-fill" id="sf-of" style="width:0%"></div></div><span class="score-num" id="sv-of">—</span></div>
+      <div class="score-row"><span class="score-label">VOLATILITY</span><div class="score-track"><div class="score-fill" id="sf-vo" style="width:0%"></div></div><span class="score-num" id="sv-vo">—</span></div>
+    </div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">WHAT EACH SCORE MEANS</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">STRUCTURE</span><span class="legend-desc">ZigZag swing structure (higher highs/lows pattern) combined with whether price is above or below the Value Area. The highest-priority layer — no trade is taken without structural alignment. Max: ±25 pts.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">LOCATION</span><span class="legend-desc">How clean the entry location is relative to the Point of Control (POC), Value Area High (VAH), and Value Area Low (VAL). Trading at a defined level is higher quality than trading in open space. Max: ±15 pts.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">MOMENTUM</span><span class="legend-desc">A combined vote from Trend Speed and MACD. Treated as one signal (both measure price rate-of-change from the same source). MACD modifies the Trend Speed base vote — it does not score independently. This eliminates double-counting. Max: ±15 pts.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">ORDER FLOW</span><span class="legend-desc">Cumulative Volume Delta (CVD) — whether real buy or sell volume is supporting the price direction. CVD divergence (price rising while buy volume declines) is a strong warning and applies a significant penalty. Max: ±20 pts.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">VOLATILITY</span><span class="legend-desc">ATR filter — never directional. Penalizes entries during dead markets (very low ATR) or when volatility has already spiked to extremes. A normal, expanding ATR environment applies no penalty. Max: −10 pts (filter only).</span></div>
+        <p style="margin-top:8px;color:var(--text-dim);">Base score starts at 50. All layers add or subtract. Final: ≥75 = Grade A, ≥60 = B, ≥50 = C, &lt;50 = No Trade.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- How Weights Work (collapsed by default, informational) -->
+  <div class="panel">
+    <div class="dd-trigger" style="padding:10px 14px;" onclick="toggleDD(this)">
+      <span class="dd-trigger-label">HOW INDICATOR WEIGHTS WORK</span>
+      <span class="dd-arrow">▼</span>
+    </div>
+    <div class="dd-body">
+      <p>Each signal layer carries a default importance weight, reflecting the design hierarchy of the system:</p>
+      <div class="legend-row" style="margin-top:6px;"><span class="legend-key" style="color:var(--title);">PAVP  30%</span><span class="legend-desc">Highest weight. Volume-based market structure (POC, VAH, VAL) is the most reliable context layer.</span></div>
+      <div class="legend-row"><span class="legend-key" style="color:var(--title);">ZigZag  25%</span><span class="legend-desc">Price structure truth layer. BOS confirmation is required for all A-grade setups.</span></div>
+      <div class="legend-row"><span class="legend-key" style="color:var(--title);">Trend Spd  15%</span><span class="legend-desc">Base vote for the momentum layer.</span></div>
+      <div class="legend-row"><span class="legend-key" style="color:var(--title);">CVD IQ  15%</span><span class="legend-desc">Order flow confirmation. Trust varies by regime — higher weight in ranging markets.</span></div>
+      <div class="legend-row"><span class="legend-key" style="color:var(--title);">MACD  10%</span><span class="legend-desc">Acts as a momentum modifier in V3, not an independent signal. Eliminates double-counting.</span></div>
+      <div class="legend-row"><span class="legend-key" style="color:var(--title);">ATR  5%</span><span class="legend-desc">Context filter only. Never adds directional points to the score.</span></div>
+      <p style="margin-top:8px;color:var(--text-dim);">Weights are designed to evolve as trade outcome data accumulates and the system identifies which indicators perform best in each regime.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- CENTER -->
+<div class="signal-col">
+
+  <div class="error-banner" id="err-banner"></div>
+
+  <!-- Main Signal Card -->
+  <div class="signal-main">
+    <div class="signal-bar" id="sig-bar"></div>
+    <div class="signal-core">
+      <div class="sig-asset" id="sig-asset">— / —</div>
+      <div class="sig-tf" id="sig-tf">Timeframe: —  ·  Last price: —</div>
+      <div class="sig-dir" id="sig-dir">WAITING</div>
+      <div class="grade-row">
+        <div class="grade-pill" id="grade-pill">GRADE —</div>
+        <div class="regime-mini" id="regime-mini">REGIME —</div>
+      </div>
+    </div>
+    <div class="conf-wrap">
+      <div class="conf-row">
+        <span class="conf-label">CONFIDENCE</span>
+        <span class="conf-val" id="conf-val">—<span>/100</span></span>
+      </div>
+      <div class="meter-track"><div class="meter-fill" id="meter-fill" style="width:0%"></div></div>
+      <div class="conf-sub" id="conf-sub"></div>
+    </div>
+    <div class="status-bar">
+      <span id="stat-sym">No asset selected</span>
+      <span id="stat-price">—</span>
+      <span id="stat-time">—</span>
+    </div>
+  </div>
+
+  <!-- Audit -->
+  <div class="panel">
+    <div class="dd-trigger" style="border-bottom:1px solid var(--border);" onclick="toggleDD(this)">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="dd-trigger-label">SYSTEM AUDIT</span>
+        <span class="audit-overall" id="audit-badge">—</span>
+      </div>
+      <span class="dd-arrow">▼</span>
+    </div>
+    <div class="audit-pills" id="audit-pills"><span style="font-size:10px;color:var(--text-dim)">Awaiting signal…</span></div>
+    <div class="dd-body" style="padding:12px 14px;" id="audit-dd-body">
+      <div id="audit-details"><span style="color:var(--text-dim);font-size:11px;">No signal loaded.</span></div>
+    </div>
+    <div class="integrity-row">
+      <span class="integrity-label">SYSTEM INTEGRITY</span>
+      <span class="integrity-val" id="integrity-val">— / 50</span>
+    </div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">WHAT IS THE SYSTEM AUDIT?</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <p>The System Audit runs on every signal and checks the structural quality of the decision — independent of whether the trade direction is correct. It asks: <em>is this signal built on solid, independent logic, or are correlated indicators inflating each other?</em></p>
+        <div class="legend-row" style="margin-top:6px;"><span class="legend-key" style="color:var(--pass);">PASS</span><span class="legend-desc">This check passed cleanly. No structural issue in this dimension.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--warn);">CAUTION</span><span class="legend-desc">A potential issue exists but it is not blocking. The signal is usable but should be interpreted with awareness of the noted limitation.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--fail);">FLAGGED</span><span class="legend-desc">A structural problem was detected — for example, trade direction conflicts with regime, or a single indicator dominates the score. Does not cancel the signal, but demands extra judgment before acting.</span></div>
+        <p style="margin-top:8px;">The five dimensions checked:</p>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">INDEPENDENCE</span><span class="legend-desc">Are scoring layers measuring different market dimensions, or are some overlapping and inflating the final score?</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">BIAS CONTROL</span><span class="legend-desc">Is the signal free from self-reinforcing feedback loops where an indicator influences both regime classification and its own scoring?</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">SCORE VALIDITY</span><span class="legend-desc">Is the score built from multiple layers, or is one indicator dominating and masking weakness in the others?</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">REGIME</span><span class="legend-desc">Does the trade direction make sense given the current market regime? A long in EXHAUSTION is a warning. A long in REVERSAL is a serious concern.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">STABILITY</span><span class="legend-desc">Is the confidence score near a grade boundary (e.g. 74 vs 75)? If so, small data changes could flip the grade — this is a fragility warning, not a disqualification.</span></div>
+        <p style="margin-top:8px;color:var(--text-dim);">Integrity Score: 45–50 = institutional grade. 35–44 = usable but fragile. Below 35 = apply significant skepticism.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reasoning -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">SIGNAL REASONING</span></div>
+    <div class="panel-body" id="reasoning-list"><div class="empty-state">No signal loaded</div></div>
+  </div>
+
+  <!-- Conflicts -->
+  <div class="panel" id="conflict-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title">CONFLICTS DETECTED</span>
+      <span class="panel-badge" id="conflict-count" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);">0</span>
+    </div>
+    <div class="panel-body" id="conflict-list"></div>
+  </div>
+
+  <!-- Expectancy -->
+  <div class="panel" id="cal-panel" style="display:none;">
+    <div class="panel-header"><span class="panel-title">EXPECTANCY ESTIMATE</span></div>
+    <div class="panel-body">
+      <div class="cal-pct" id="cal-pct">—</div>
+      <div class="cal-sub">estimated historical win rate for this setup grade</div>
+      <div class="cal-note" id="cal-note">—</div>
+      <div class="cal-tag">⚠ Not yet calibrated from live trade data — estimates only</div>
+    </div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">WHAT DOES THIS MEAN?</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <p><strong>The percentage shown is a conservative estimate, not a guaranteed win rate.</strong> It represents what a system with similar scoring characteristics has historically produced in research contexts — before being validated on your specific assets and trading conditions.</p>
+        <p>The warning <em>"Not yet calibrated from live trade data"</em> means the system has not run enough real trades to replace these estimates with measured outcomes. Once the backtest engine processes historical data and you record real trade results, these numbers update to reflect actual win rates for each grade on each asset and timeframe.</p>
+        <div class="legend-row" style="margin-top:6px;"><span class="legend-key" style="color:var(--long);">A  ~58%</span><span class="legend-desc">Strong multi-layer alignment. Best historical win rate bucket — but still requires a confirmed entry trigger. Edge disappears without execution discipline.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--title);">B  ~52%</span><span class="legend-desc">Moderate alignment. Thin edge — execution quality and risk management matter more than the signal at this grade.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--amber);">C  ~48%</span><span class="legend-desc">Weak alignment. Near breakeven after costs. Most disciplined traders skip C setups entirely.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--short);">NONE  ~40%</span><span class="legend-desc">No edge. Score is below the minimum threshold. Taking this trade has negative expected value.</span></div>
+        <p style="margin-top:8px;color:var(--text-dim);">Record your trade outcomes using the RECORD THIS SIGNAL button. As data accumulates, these estimates become real measured win rates specific to your trading.</p>
+      </div>
+    </div>
+  </div>
+
+  <button class="refresh-btn" id="refresh-btn" onclick="fetchSignal()">
+    <span id="btn-icon">↻</span>
+    <span id="btn-label">ANALYZE NOW</span>
+  </button>
+  <button class="record-btn" id="record-btn" onclick="openRecordModal()" disabled>
+    ✦ RECORD THIS SIGNAL
+  </button>
+
+</div>
+
+<!-- RIGHT -->
+<div class="right-col">
+
+  <!-- Entry Logic -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">ENTRY LOGIC</span></div>
+    <div class="panel-body"><div class="entry-text" id="entry-logic">Awaiting signal…</div></div>
+  </div>
+
+  <!-- Trade Invalidation -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">TRADE INVALIDATION</span></div>
+    <div class="panel-body"><div class="entry-text" id="invalid-text">Awaiting signal…</div></div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">WHAT IS TRADE INVALIDATION?</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <p>Invalidation is the specific price action that tells you the original trade idea was wrong — not just temporarily against you, but structurally broken.</p>
+        <p>For a long trade: if the reason you entered was price holding above the Value Area High, then the trade is invalidated when price closes back below it. The setup no longer exists.</p>
+        <p>Knowing this level before you enter helps you define your maximum acceptable loss and maintain discipline. It is how the system avoids holding losing trades past the point where the edge has disappeared.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Assessment -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">RISK ASSESSMENT</span></div>
+    <div class="panel-body">
+      <div class="risk-pill" id="risk-pill">—</div>
+      <div class="entry-text" id="risk-text">—</div>
+    </div>
+    <div class="dd-section">
+      <div class="dd-trigger" onclick="toggleDD(this)">
+        <span class="dd-trigger-label">RISK LEVELS EXPLAINED</span>
+        <span class="dd-arrow">▼</span>
+      </div>
+      <div class="dd-body">
+        <div class="legend-row"><span class="legend-key" style="color:var(--long);">LOW</span><span class="legend-desc">Grade A setup with no CVD divergence, no momentum exhaustion, and a clear regime. All layers aligned. Use standard position sizing.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--amber);">MEDIUM</span><span class="legend-desc">Grade B setup, or minor conflicts present. The trade idea is valid but not all layers fully confirm. Consider reducing position size by 25–50%.</span></div>
+        <div class="legend-row"><span class="legend-key" style="color:var(--short);">HIGH</span><span class="legend-desc">Grade C setup, significant CVD divergence, momentum exhaustion, or uncertain regime. The environment is unfavorable. Skip this signal or use minimum position size with tight invalidation.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade Memory -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">TRADE MEMORY</span>
+      <span class="panel-badge" id="tm-badge" style="background:var(--surface-3);color:var(--text-dim);">0</span>
+    </div>
+    <div class="tm-stats">
+      <div class="tm-stat">
+        <div class="tm-stat-val" id="tm-total">0</div>
+        <div class="tm-stat-label">RECORDED</div>
+      </div>
+      <div class="tm-stat">
+        <div class="tm-stat-val" id="tm-winrate">—</div>
+        <div class="tm-stat-label">WIN RATE</div>
+      </div>
+    </div>
+    <div id="tm-list"><div class="empty-state" style="padding:14px;">No trades recorded yet — click RECORD THIS SIGNAL after an analysis</div></div>
+    <div class="tm-footer">
+      <button class="export-btn" onclick="exportToExcel()">⬇ EXPORT EXCEL</button>
+      <button class="clear-btn" onclick="clearTradeMemory()">CLEAR</button>
+    </div>
+  </div>
+
+  <!-- Session Log (current run) -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">SESSION LOG</span>
+      <span class="panel-badge" id="mem-badge" style="background:var(--surface-3);color:var(--text-dim);">0</span>
+    </div>
+    <div id="mem-log"><div class="empty-state">No signals this session</div></div>
+  </div>
+
+</div>
+</main>
+
+<!-- ── RECORD SIGNAL MODAL ──────────────────────────────────── -->
+<div class="modal-overlay" id="record-modal" onclick="if(event.target===this)closeRecordModal()">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-title">RECORD SIGNAL OUTCOME</span>
+      <button class="modal-close" onclick="closeRecordModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-sig-row">
+        <span class="modal-sig-lbl">DIRECTION</span>
+        <span class="modal-sig-val" id="rec-dir">—</span>
+        <span class="modal-sig-lbl" style="margin-left:10px;">GRADE</span>
+        <span class="modal-sig-val" id="rec-grade">—</span>
+        <span class="modal-sig-lbl" style="margin-left:10px;">CONF</span>
+        <span class="modal-sig-val" id="rec-conf">—</span>
+      </div>
+      <div class="f-row">
+        <label class="f-label">OUTCOME</label>
+        <select class="f-sel" id="rec-outcome">
+          <option value="PENDING">PENDING — trade still open</option>
+          <option value="WIN">WIN — trade closed profitably</option>
+          <option value="LOSS">LOSS — trade closed at a loss</option>
+          <option value="BREAKEVEN">BREAKEVEN — closed near entry</option>
+        </select>
+      </div>
+      <div class="f-row-2">
+        <div class="f-row">
+          <label class="f-label">ENTRY PRICE</label>
+          <input class="f-input" id="rec-entry-price" type="number" step="any" placeholder="Auto-filled">
+        </div>
+        <div class="f-row">
+          <label class="f-label">EXIT PRICE (optional)</label>
+          <input class="f-input" id="rec-exit-price" type="number" step="any" placeholder="Leave blank if open">
+        </div>
+      </div>
+      <div class="f-row">
+        <label class="f-label">NOTES (optional)</label>
+        <input class="f-input" id="rec-notes" type="text" placeholder="e.g. Missed entry, news spike, held overnight…">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-cancel" onclick="closeRecordModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTrade()">✦ Save to Trade Memory</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────
+let curSym = 'AAPL', curTF = '5m', sessionLog = [], lastSig = null;
+let autoTimer = null;
+const SERVER = 'http://127.0.0.1:8000';
+let serverOnline = false;
+let tradeMemory = JSON.parse(localStorage.getItem('tradeMemory') || '[]');
+
+const TF_INTERVAL = {'1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'60m','4h':'60m','1d':'1d'};
+const TF_PERIOD   = {'1m':'1d','5m':'5d','15m':'1mo','30m':'1mo','1h':'3mo','4h':'3mo','1d':'1y'};
+
+const PRESETS = {
+  stocks:  [{v:'AAPL',l:'AAPL — Apple'},{v:'SPY',l:'SPY — S&P 500 ETF'},{v:'TSLA',l:'TSLA — Tesla'},{v:'NVDA',l:'NVDA — NVIDIA'},{v:'MSFT',l:'MSFT — Microsoft'},{v:'AMZN',l:'AMZN — Amazon'},{v:'QQQ',l:'QQQ — Nasdaq ETF'},{v:'custom',l:'Custom…'}],
+  crypto:  [{v:'BTC-USD',l:'BTC — Bitcoin'},{v:'ETH-USD',l:'ETH — Ethereum'},{v:'SOL-USD',l:'SOL — Solana'},{v:'XRP-USD',l:'XRP — Ripple'},{v:'ADA-USD',l:'ADA — Cardano'},{v:'QNT-USD',l:'QNT — Quant'},{v:'BNB-USD',l:'BNB — Binance Coin'},{v:'LINK-USD',l:'LINK — Chainlink'},{v:'custom',l:'Custom…'}],
+  forex:   [{v:'EURUSD=X',l:'EUR / USD'},{v:'GBPUSD=X',l:'GBP / USD'},{v:'USDJPY=X',l:'USD / JPY'},{v:'AUDUSD=X',l:'AUD / USD'},{v:'USDCAD=X',l:'USD / CAD'},{v:'custom',l:'Custom…'}],
+  futures: [{v:'ES=F',l:'ES — S&P 500 Futures'},{v:'NQ=F',l:'NQ — Nasdaq Futures'},{v:'GC=F',l:'GC — Gold Futures'},{v:'SI=F',l:'SI — Silver Futures'},{v:'CL=F',l:'CL — Crude Oil (WTI)'},{v:'BZ=F',l:'BZ — Brent Crude'},{v:'ZB=F',l:'ZB — 30yr Bond'},{v:'custom',l:'Custom…'}],
+  commodities: [{v:'GC=F',l:'GOLD — Gold Futures'},{v:'SI=F',l:'SILVER — Silver Futures'},{v:'CL=F',l:'USOIL — Crude Oil WTI'},{v:'BZ=F',l:'UKOIL — Brent Crude'},{v:'NG=F',l:'NATGAS — Natural Gas'},{v:'HG=F',l:'COPPER — Copper Futures'},{v:'custom',l:'Custom…'}]
+};
+
+function setType(type, btn) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const sel = document.getElementById('sym-sel');
+  sel.innerHTML = PRESETS[type].map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
+  curSym = PRESETS[type][0].v;
+  document.getElementById('custom-sym').style.display = 'none';
+  updatePill();
+}
+
+function onSymChange() {
+  const sel = document.getElementById('sym-sel');
+  const cust = document.getElementById('custom-sym');
+  if (sel.value === 'custom') {
+    cust.style.display = 'inline-block'; cust.focus();
+    curSym = cust.value.toUpperCase() || '';
+  } else {
+    cust.style.display = 'none';
+    curSym = sel.value;
+  }
+  updatePill();
+}
+
+function updatePill() {
+  curTF = document.getElementById('tf-sel').value;
+  document.getElementById('cur-asset-pill').textContent = `${curSym || '—'}  ·  ${curTF}`;
+}
+
+// ── DROPDOWN ──────────────────────────────────────────────────
+function toggleDD(trigger) {
+  const body  = trigger.nextElementSibling;
+  const arrow = trigger.querySelector('.dd-arrow');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open', open);
+}
+
+// ── LIVE DOT ──────────────────────────────────────────────────
+function setLive(on) {
+  document.getElementById('live-dot').classList.toggle('on', on);
+  document.getElementById('live-status').textContent = on ? 'LIVE' : 'IDLE';
+}
+
+// ── SERVER STATUS ─────────────────────────────────────────────
+async function checkServer() {
+  try {
+    const r = await fetch(`${SERVER}/`, {signal: AbortSignal.timeout(2000)});
+    serverOnline = r.ok;
+  } catch { serverOnline = false; }
+  const dot = document.getElementById('srv-dot');
+  const lbl = document.getElementById('srv-label');
+  dot.className = 'srv-dot ' + (serverOnline ? 'online' : 'offline');
+  lbl.textContent = serverOnline ? 'SERVER ONLINE' : 'SERVER OFFLINE';
+  if (serverOnline) syncTradesFromServer();
+}
+
+async function syncTradesFromServer() {
+  try {
+    const r = await fetch(`${SERVER}/trades`, {signal: AbortSignal.timeout(4000)});
+    if (r.ok) {
+      const data = await r.json();
+      if (data.trades && data.trades.length >= tradeMemory.length) {
+        tradeMemory = data.trades;
+        localStorage.setItem('tradeMemory', JSON.stringify(tradeMemory));
+        renderTradeMemory();
+      }
+    }
+  } catch {}
+}
+
+// ── TRADE MEMORY ──────────────────────────────────────────────
+function openRecordModal() {
+  if (!lastSig) return;
+  const dir = lastSig.direction;
+  const el  = document.getElementById('rec-dir');
+  el.textContent = dir;
+  el.className   = 'modal-sig-val ' + (dir === 'LONG' ? 'long' : dir === 'SHORT' ? 'short' : '');
+  document.getElementById('rec-grade').textContent = 'GRADE ' + (lastSig.grade || '—');
+  document.getElementById('rec-conf').textContent  = (lastSig.confidence || 0) + '/100';
+  document.getElementById('rec-outcome').value     = 'PENDING';
+  document.getElementById('rec-entry-price').value = lastSig.lastC ? lastSig.lastC.toFixed(4) : '';
+  document.getElementById('rec-exit-price').value  = '';
+  document.getElementById('rec-notes').value       = '';
+  document.getElementById('record-modal').classList.add('open');
+}
+
+function closeRecordModal() {
+  document.getElementById('record-modal').classList.remove('open');
+}
+
+async function saveTrade() {
+  if (!lastSig) return;
+  const outcome    = document.getElementById('rec-outcome').value;
+  const entryPrice = parseFloat(document.getElementById('rec-entry-price').value) || null;
+  const exitPrice  = parseFloat(document.getElementById('rec-exit-price').value)  || null;
+  const notes      = document.getElementById('rec-notes').value.trim();
+  const dir        = lastSig.direction;
+
+  let pnlPct = null;
+  if (entryPrice && exitPrice) {
+    const rawPnl = (exitPrice - entryPrice) / entryPrice * 100;
+    pnlPct = parseFloat((dir === 'SHORT' ? -rawPnl : rawPnl).toFixed(2));
+  }
+
+  const trade = {
+    id:          Date.now(),
+    recorded_at: new Date().toISOString(),
+    symbol:      lastSig.symbol,
+    timeframe:   lastSig.tf,
+    direction:   dir,
+    signal_type: dir + '_' + (lastSig.grade || 'NONE'),
+    grade:       lastSig.grade   || 'NONE',
+    regime:      lastSig.regime  || '—',
+    confidence:  lastSig.confidence || 0,
+    risk:        lastSig.risk    || '—',
+    entry_price: entryPrice,
+    exit_price:  exitPrice,
+    outcome,
+    pnl_pct:     pnlPct,
+    r_multiple:  null,
+    notes,
+  };
+
+  tradeMemory.unshift(trade);
+  localStorage.setItem('tradeMemory', JSON.stringify(tradeMemory));
+
+  if (serverOnline) {
+    try {
+      await fetch(`${SERVER}/trades`, {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify(trade),
+        signal:  AbortSignal.timeout(4000),
+      });
+    } catch {}
+  }
+
+  renderTradeMemory();
+  closeRecordModal();
+}
+
+function renderTradeMemory() {
+  const total     = tradeMemory.length;
+  const completed = tradeMemory.filter(t => ['WIN','LOSS','BREAKEVEN'].includes(t.outcome));
+  const wins      = completed.filter(t => t.outcome === 'WIN');
+  const wr        = completed.length ? Math.round(wins.length / completed.length * 100) : null;
+
+  document.getElementById('tm-badge').textContent = total;
+  document.getElementById('tm-total').textContent = total;
+
+  const wrEl = document.getElementById('tm-winrate');
+  wrEl.textContent = wr !== null ? wr + '%' : '—';
+  wrEl.className   = 'tm-stat-val' + (wr === null ? '' : wr >= 50 ? ' good' : ' bad');
+
+  const listEl = document.getElementById('tm-list');
+  if (!total) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:14px;">No trades recorded yet — click RECORD THIS SIGNAL after an analysis</div>';
+    return;
+  }
+  listEl.innerHTML = tradeMemory.slice(0, 10).map(t => {
+    const dc = t.direction === 'LONG' ? 'LONG' : t.direction === 'SHORT' ? 'SHORT' : 'NT';
+    const oc = t.outcome || 'PENDING';
+    return `<div class="tm-item">
+      <span class="tm-dir ${dc}">${t.direction}</span>
+      <span class="tm-sym">${t.symbol}·${t.timeframe}</span>
+      <span class="tm-grade">${t.grade || '—'}</span>
+      <span class="tm-outcome ${oc}">${oc}</span>
+    </div>`;
+  }).join('');
+}
+
+function clearTradeMemory() {
+  if (!confirm('Clear ALL recorded trades from local storage? This cannot be undone.\n(Server-side records are unaffected.)')) return;
+  tradeMemory = [];
+  localStorage.removeItem('tradeMemory');
+  renderTradeMemory();
+}
+
+// ── EXCEL EXPORT ──────────────────────────────────────────────
+async function exportToExcel() {
+  // Try server first (best formatting via openpyxl)
+  if (serverOnline) {
+    try {
+      const r = await fetch(`${SERVER}/trades/export`, {signal: AbortSignal.timeout(10000)});
+      if (r.ok) {
+        const blob = await r.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `trade_memory_${new Date().toISOString().slice(0,10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {}
+  }
+
+  // Client-side fallback via SheetJS
+  if (!tradeMemory.length) { alert('No trades recorded yet.'); return; }
+  if (typeof XLSX === 'undefined') {
+    alert('SheetJS not loaded. Start the server for Excel export.'); return;
+  }
+
+  const completed = tradeMemory.filter(t => ['WIN','LOSS','BREAKEVEN'].includes(t.outcome));
+  const wins      = completed.filter(t => t.outcome === 'WIN');
+  const wr        = completed.length ? (wins.length / completed.length * 100).toFixed(1) + '%' : '—';
+
+  const hdr = ['ID','Recorded','Symbol','Timeframe','Direction','Signal Type','Grade','Regime','Confidence','Risk','Entry Price','Exit Price','Outcome','PnL %','R Multiple','Notes'];
+  const rows = tradeMemory.map(t => [
+    t.id, t.recorded_at, t.symbol, t.timeframe, t.direction, t.signal_type,
+    t.grade, t.regime, t.confidence, t.risk, t.entry_price, t.exit_price,
+    t.outcome, t.pnl_pct, t.r_multiple, t.notes
+  ]);
+
+  const statsData = [
+    ['TRADING PERFORMANCE SUMMARY'],
+    [],
+    ['Total Recorded', tradeMemory.length],
+    ['Completed',      completed.length],
+    ['Wins',          wins.length],
+    ['Win Rate',      wr],
+  ];
+
+  const wb  = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet([hdr, ...rows]);
+  const ws2 = XLSX.utils.aoa_to_sheet(statsData);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Trade Log');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Performance Stats');
+  XLSX.writeFile(wb, `trade_memory_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ── SERVER RESPONSE → DASHBOARD SIGNAL FORMAT ─────────────────
+function serverResponseToSignal(data) {
+  const d    = data.decision            || {};
+  const snap = data.indicator_snapshot  || {};
+  const atr  = snap.atr                 || {};
+  const macd = snap.macd                || {};
+  const ts   = snap.trend_speed         || {};
+  const cvd  = snap.cvd                 || {};
+  const pavp = snap.pavp                || {};
+  const zz   = snap.zigzag              || {};
+  const sb   = d.score_breakdown        || {};
+
+  return {
+    symbol:     data.symbol,
+    tf:         data.timeframe,
+    lastC:      data.price ? data.price.close : 0,
+    direction:  d.bias          || 'NO TRADE',
+    bias:       d.bias          || 'LONG',
+    grade:      d.setup_grade   || 'NONE',
+    regime:     d.regime        || 'UNCERTAIN',
+    confidence: d.confidence    || 0,
+    risk:       d.risk_state    || 'HIGH',
+    entry:      d.entry_trigger || 'Awaiting signal…',
+    invalid:    d.invalidation  || 'Awaiting signal…',
+    reasoning:  d.reasoning     || [],
+    conflicts:  d.conflicts     || [],
+    scores: {
+      structure:  sb.structure   || 0,
+      location:   sb.location    || 0,
+      momentum:   sb.momentum    || 0,
+      orderflow:  sb.order_flow  || 0,
+      volatility: sb.volatility  || 0,
+      total:      d.confidence   || 0,
+    },
+    raw: {
+      tsDir:    ts.direction                  || 'FLAT',
+      tsRegime: ts.regime                     || 'NORMAL',
+      cvdDir:   cvd.cvd_direction             || 'NEUTRAL',
+      cvdDiv:   cvd.divergence?.medium        || 'NONE',
+      macdState:macd.histogram_state          || 'BULLISH_DECELERATING',
+      structure:zz.structure                  || 'NEUTRAL',
+      vaPos:    pavp.value_area_position      || 'INSIDE_VA',
+      atrRank:  atr.percentile_rank           || 50,
+      volState: atr.volatility_state          || 'NORMAL',
+    },
+  };
+}
+
+// ── YAHOO FINANCE FETCH ───────────────────────────────────────
+async function fetchYahoo(symbol, interval, period) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${period}&includePrePost=false`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Yahoo returned HTTP ${res.status} for "${symbol}"`);
+  const json = await res.json();
+  const result = json?.chart?.result?.[0];
+  if (!result) throw new Error(`No data for symbol "${symbol}". Check the ticker is correct.`);
+  const ts = result.timestamp || result.timestamps;
+  const q  = result.indicators.quote[0];
+  const bars = [];
+  for (let i = 0; i < ts.length; i++) {
+    if (q.close[i] != null && q.open[i] != null)
+      bars.push({t:ts[i], o:q.open[i], h:q.high[i]||q.close[i], l:q.low[i]||q.close[i], c:q.close[i], v:q.volume[i]||0});
+  }
+  if (bars.length < 15) throw new Error(`Too few bars returned for "${symbol}" on ${interval} timeframe. Try a longer timeframe.`);
+  return bars;
+}
+
+// ── INDICATOR ENGINE (JavaScript replication) ─────────────────
+function runIndicators(bars) {
+  const n = bars.length;
+  const C = bars.map(b=>b.c), H = bars.map(b=>b.h), L = bars.map(b=>b.l);
+  const O = bars.map(b=>b.o), V = bars.map(b=>b.v);
+
+  // ATR (Wilder 14)
+  let atrVal = 0;
+  const atrSeries = [];
+  { const tr=[]; for(let i=1;i<n;i++) tr.push(Math.max(H[i]-L[i],Math.abs(H[i]-C[i-1]),Math.abs(L[i]-C[i-1])));
+    let a=tr.slice(0,14).reduce((s,v)=>s+v,0)/14; atrSeries.push(a);
+    for(let i=14;i<tr.length;i++){a=(a*13+tr[i])/14;atrSeries.push(a);}
+    atrVal=atrSeries[atrSeries.length-1]||0; }
+  const atrRank = atrSeries.length>10?(atrSeries.filter(v=>v<atrVal).length/atrSeries.length*100):50;
+  const volState = atrRank>80?'HIGH':atrRank<20?'LOW':'NORMAL';
+
+  // PAVP (last 50 bars)
+  const lb=Math.min(50,n), slH=H.slice(-lb), slL=L.slice(-lb), slV=V.slice(-lb);
+  const phigh=Math.max(...slH), plow=Math.min(...slL);
+  const rows=20, step=(phigh-plow)/rows||0.0001;
+  const bins=new Array(rows).fill(0);
+  for(let i=0;i<lb;i++){const bh=slH[i],bl=slL[i],bv=slV[i],br=bh-bl||step;for(let r=0;r<rows;r++){const rl=plow+r*step,rh=rl+step,ov=Math.min(bh,rh)-Math.max(bl,rl);if(ov>0)bins[r]+=bv*(ov/br);}}
+  const pocIdx=bins.indexOf(Math.max(...bins));
+  const poc=plow+(pocIdx+0.5)*step;
+  let cap=bins.reduce((a,b)=>a+b,0)*0.68,abv=pocIdx,bel=pocIdx,cum=bins[pocIdx];
+  while(cum<cap){const va=abv+1<rows?bins[abv+1]:0,vb=bel-1>=0?bins[bel-1]:0;if(!va&&!vb)break;if(va>=vb){abv++;cum+=va;}else{bel--;cum+=vb;}}
+  const vah=plow+(abv+1)*step, val=plow+bel*step;
+  const lastC=bars[n-1].c;
+  const vaPos=lastC>vah?'ABOVE_VA':lastC<val?'BELOW_VA':'INSIDE_VA';
+  const pocDist=poc>0?((lastC-poc)/poc*100):0;
+  const vaWidth=phigh>plow?((vah-val)/(phigh-plow)*100):50;
+
+  // ZigZag (close-confirmed BOS)
+  const thresh=atrVal*1.5;
+  const pivots=[];let dir=0,lH=H[0],lL=L[0];
+  for(let i=1;i<n;i++){
+    if(dir>=0){if(H[i]>lH)lH=H[i];if(L[i]<=lH-thresh&&lH!==H[0]){pivots.push({t:'H',v:lH});dir=-1;lL=L[i];}}
+    if(dir<=0){if(L[i]<lL)lL=L[i];if(H[i]>=lL+thresh&&lL!==L[0]){pivots.push({t:'L',v:lL});dir=1;lH=H[i];}}
+  }
+  const swH=pivots.filter(p=>p.t==='H').map(p=>p.v);
+  const swL=pivots.filter(p=>p.t==='L').map(p=>p.v);
+  const lsh=swH.length?swH[swH.length-1]:Math.max(...H);
+  const lsl=swL.length?swL[swL.length-1]:Math.min(...L);
+  let structure='NEUTRAL';
+  if(swH.length>=2&&swL.length>=2){
+    if(swH[swH.length-1]>swH[swH.length-2]&&swL[swL.length-1]>swL[swL.length-2])structure='BULLISH';
+    else if(swH[swH.length-1]<swH[swH.length-2]&&swL[swL.length-1]<swL[swL.length-2])structure='BEARISH';
+  }
+  const bos=lastC>lsh?'BOS_UP':lastC<lsl?'BOS_DOWN':'NONE';
+
+  // MACD (12,26,9)
+  function ema(src,p){let v=src[0];const k=2/(p+1);for(let i=1;i<src.length;i++)v=src[i]*k+v*(1-k);return v;}
+  function emaArr(src,p){let v=src[0];const k=2/(p+1),out=[v];for(let i=1;i<src.length;i++){v=src[i]*k+v*(1-k);out.push(v);}return out;}
+  const fastArr=emaArr(C,12), slowArr=emaArr(C,26);
+  const macdLine=fastArr.map((v,i)=>v-slowArr[i]);
+  const sigLine=ema(macdLine,9);
+  const hist=macdLine[macdLine.length-1]-sigLine;
+  const histPrev=macdLine[macdLine.length-2]-ema(macdLine.slice(0,-1),9);
+  let macdState;
+  if(hist>0&&hist>histPrev)macdState='BULLISH_ACCELERATING';
+  else if(hist>0)macdState='BULLISH_DECELERATING';
+  else if(hist<0&&hist>histPrev)macdState='BEARISH_RECOVERING';
+  else macdState='BEARISH_ACCELERATING';
+  const macdZL=macdLine[macdLine.length-1]>0?'ABOVE':'BELOW';
+  const macdCross=(macdLine[n-1]>sigLine&&macdLine[n-2]<sigLine)?'BULLISH_CROSS'
+                 :(macdLine[n-1]<sigLine&&macdLine[n-2]>sigLine)?'BEARISH_CROSS':'NONE';
+
+  // Trend Speed (EMA20 + wave ratio)
+  const ema20=ema(C,20);
+  const tsDir=lastC>ema20?'BULLISH':lastC<ema20?'BEARISH':'FLAT';
+  const legLen=Math.min(20,n);
+  const waveNow=C.slice(-legLen).reduce((s,c,i,a)=>s+(i>0?c-a[i-1]:0),0);
+  const wavePrev=C.slice(-legLen*2,-legLen).reduce((s,c,i,a)=>s+(i>0?c-a[i-1]:0),0)||1;
+  const waveRatio=Math.abs(waveNow/(wavePrev||1));
+  const tsRegime=waveRatio>1.2?'EXPANSION':waveRatio<0.4?'EXHAUSTION':'NORMAL';
+  const tsPEma=lastC>ema20?'ABOVE':'BELOW';
+
+  // CVD
+  const delta=bars.map(b=>(b.c>=b.o?1:-1)*b.v);
+  const cvdSeries=delta.reduce((a,d,i)=>{a.push((a[i-1]||0)+d);return a;},[]);
+  const recentDelta=delta.slice(-5).reduce((s,d)=>s+d,0);
+  const recentVol=V.slice(-5).reduce((s,v)=>s+v,0)||1;
+  const buyRatio=(recentDelta+recentVol)/(2*recentVol);
+  const cvdDir=buyRatio>0.55?'BUYING':buyRatio<0.45?'SELLING':'NEUTRAL';
+  const cvdNow=cvdSeries[n-1];
+  const cvdHiIdx=H.slice(-20).reduce((mi,v,i,a)=>v>a[mi]?i:mi,0);
+  const cvdAtHi=cvdSeries[n-20+cvdHiIdx]||cvdNow;
+  let cvdDiv='NONE';
+  if(lastC>=Math.max(...H.slice(-20))*0.998&&cvdNow<cvdAtHi)cvdDiv='BEARISH';
+  const absorption=(V[n-1]>V.slice(-10).reduce((s,v)=>s+v)/10*1.5&&Math.abs(lastC-O[n-1])<atrVal*0.3)
+    ?(cvdDir==='BUYING'?'BUY_ABSORPTION':'SELL_ABSORPTION'):'NONE';
+
+  // Regime (V3: ATR+PAVP only)
+  let regime;
+  if(atrRank>90)regime='EXHAUSTION';
+  else if(vaPos==='INSIDE_VA'&&volState!=='HIGH')regime='RANGING';
+  else if(vaPos!=='INSIDE_VA'&&volState==='HIGH')regime='BREAKOUT';
+  else if(vaPos!=='INSIDE_VA')regime='TRENDING';
+  else regime='UNCERTAIN';
+
+  return {lastC, poc, vah, val, vaPos, pocDist, vaWidth, lsh, lsl, structure, bos,
+          macdState, macdZL, macdCross, tsDir, tsRegime, waveRatio, tsPEma,
+          cvdDir, cvdDiv, absorption, atrRank, volState, regime};
+}
+
+// ── SCORING ───────────────────────────────────────────────────
+function scoreSignal(ind, symbol, tf) {
+  const {lastC,poc,vah,val,vaPos,pocDist,vaWidth,lsh,lsl,structure,bos,
+         macdState,macdZL,macdCross,tsDir,tsRegime,waveRatio,tsPEma,
+         cvdDir,cvdDiv,absorption,atrRank,volState,regime} = ind;
+
+  const bias = structure==='BULLISH'?'LONG':structure==='BEARISH'?'SHORT':
+               vaPos==='ABOVE_VA'?'LONG':vaPos==='BELOW_VA'?'SHORT':'LONG';
+  const tDir=bias==='LONG'?'BULLISH':'BEARISH';
+  const tVA=bias==='LONG'?'ABOVE_VA':'BELOW_VA';
+  const tBOS=bias==='LONG'?'BOS_UP':'BOS_DOWN';
+  const tMACD=bias==='LONG'?'BULLISH_ACCELERATING':'BEARISH_ACCELERATING';
+  const tMACD2=bias==='LONG'?'BULLISH_DECELERATING':'BEARISH_RECOVERING';
+  const tCVD=bias==='LONG'?'BUYING':'SELLING';
+  const tDiv=bias==='LONG'?'BEARISH':'BULLISH';
+  const tAbs=bias==='LONG'?'BUY_ABSORPTION':'SELL_ABSORPTION';
+  const tCross=bias==='LONG'?'BULLISH_CROSS':'BEARISH_CROSS';
+
+  const base = regime==='UNCERTAIN'?40:50;
+  const reasoning=[], conflicts=[];
+
+  // STRUCTURE
+  let sS=0;
+  if(structure===tDir&&bos===tBOS&&vaPos===tVA){sS=25;reasoning.push('Strong structure: '+tDir+' ZigZag + BOS confirmed + price outside Value Area');}
+  else if(structure===tDir&&vaPos===tVA){sS=15;reasoning.push('Aligned structure: '+tDir+' ZigZag + price outside Value Area (no BOS yet)');}
+  else if(structure===tDir){sS=5;reasoning.push('ZigZag '+tDir+' — Value Area not yet aligned');}
+  else if(structure==='NEUTRAL'){sS=-15;reasoning.push('Structure neutral — no confirmed directional swing pattern');}
+  else{sS=-25;reasoning.push('Structure conflict — ZigZag opposes '+bias+' bias');}
+
+  // LOCATION
+  let sL=0;
+  if(vaPos===tVA){
+    if(Math.abs(pocDist)<0.2){sL=10;reasoning.push('Clean entry: price near VA boundary ('+vaPos+')');}
+    else if(Math.abs(pocDist)>0.5){sL=7;reasoning.push('Price accepted outside Value Area ('+vaPos+')');}
+    else{sL=5;reasoning.push('Price outside Value Area ('+vaPos+')');}
+  } else if(vaPos==='INSIDE_VA'){sL=-10;reasoning.push('Price inside Value Area — lower quality chop zone');}
+  if(Math.abs(pocDist)<0.1){sL-=3;reasoning.push('Price at POC ('+poc.toFixed(4)+') — mean-reversion magnet risk');}
+  if(vaWidth>70){sL-=2;reasoning.push('Value Area is wide ('+vaWidth.toFixed(0)+'%) — extended range');}
+
+  // MOMENTUM (combined vote)
+  let sM=0;
+  if(tsDir===tDir){
+    if(tsRegime==='EXPANSION'){sM=10;reasoning.push('Trend Speed '+tDir+' + EXPANSION — momentum accelerating');}
+    else if(tsRegime==='EXHAUSTION'){sM=-5;reasoning.push('Trend Speed '+tDir+' but EXHAUSTION — momentum fading');}
+    else{sM=6;reasoning.push('Trend Speed '+tDir+' — steady momentum');}
+  } else if(tsDir==='FLAT'){reasoning.push('Trend Speed flat — no directional conviction');}
+  else{sM=-8;reasoning.push('Trend Speed opposes '+bias+' bias');}
+  if(waveRatio>1.2){sM+=2;reasoning.push('Wave accelerating vs historical average (ratio '+waveRatio.toFixed(2)+'x)');}
+  else if(waveRatio<0.4){sM-=2;reasoning.push('Wave exhausted vs historical average (ratio '+waveRatio.toFixed(2)+'x)');}
+  if(tsPEma==='CROSSING'){sM-=2;reasoning.push('Price crossing dynamic EMA — directional transition, caution');}
+  // MACD modifier
+  if(macdState===tMACD&&macdZL===(bias==='LONG'?'ABOVE':'BELOW')){sM+=5;reasoning.push('MACD '+macdState+' above zero — confirms momentum direction');}
+  else if(macdState===tMACD){sM+=3;reasoning.push('MACD '+macdState+' below zero — building momentum');}
+  else if(macdState===tMACD2){sM+=1;reasoning.push('MACD '+macdState+' — weakening but directionally aligned');}
+  else{sM-=4;reasoning.push('MACD disputes momentum direction ('+macdState+')');}
+  if(macdCross===tCross){sM+=2;reasoning.push('Fresh MACD crossover — confirms entry timing');}
+  else if(macdCross!=='NONE'){sM-=2;reasoning.push('Opposing MACD crossover — timing caution');}
+
+  // ORDER FLOW
+  let sO=0;
+  if(cvdDir===tCVD){sO=10;reasoning.push('CVD confirming '+tCVD+' pressure — order flow aligned');}
+  else if(cvdDir==='NEUTRAL'){reasoning.push('CVD neutral — no clear order flow conviction');}
+  else{sO=-5;reasoning.push('CVD opposes '+bias+' — selling into '+bias.toLowerCase()+' bias');}
+  if(cvdDiv===tDiv){sO-=10;reasoning.push('CVD divergence: price direction not confirmed by volume delta');}
+  if(absorption===tAbs){sO+=5;reasoning.push('Absorption detected ('+tAbs+') — hidden institutional presence');}
+
+  // VOLATILITY
+  let sV=0;
+  if(volState==='LOW'){sV=-5;reasoning.push('ATR low — low-activity market, avoid breakout entries');}
+  if(atrRank>90){sV-=5;reasoning.push('ATR at extreme ('+Math.round(atrRank)+'th percentile) — overextended move risk');}
+  else if(atrRank<10){sV-=5;reasoning.push('ATR at bottom ('+Math.round(atrRank)+'th percentile) — dead market');}
+  if(!sV){reasoning.push('ATR normal — no volatility adjustment applied');}
+
+  // Conflict detection
+  if(bias==='LONG'){
+    if(cvdDir==='SELLING')conflicts.push('CVD showing selling pressure while bias is LONG');
+    if(tsDir==='BEARISH')conflicts.push('Trend Speed is bearish while bias is LONG');
+    if(structure==='BEARISH')conflicts.push('ZigZag structure is bearish while bias is LONG');
+    if(macdState==='BEARISH_ACCELERATING')conflicts.push('MACD accelerating bearish while bias is LONG');
+    if(cvdDiv==='BEARISH')conflicts.push('CVD divergence: buy volume declining as price rises');
+  } else {
+    if(cvdDir==='BUYING')conflicts.push('CVD showing buying pressure while bias is SHORT');
+    if(tsDir==='BULLISH')conflicts.push('Trend Speed is bullish while bias is SHORT');
+    if(structure==='BULLISH')conflicts.push('ZigZag structure is bullish while bias is SHORT');
+    if(macdState==='BULLISH_ACCELERATING')conflicts.push('MACD accelerating bullish while bias is SHORT');
+    if(cvdDiv==='BULLISH')conflicts.push('CVD divergence: sell volume declining as price falls');
+  }
+
+  let total = Math.max(0, Math.min(100, base+sS+sL+sM+sO+sV));
+  if(regime==='UNCERTAIN'&&total<80)total=Math.min(total,45);
+  if(conflicts.length>=3)total=Math.min(total,45);
+
+  const grade=total>=75?'A':total>=60?'B':total>=50?'C':'NONE';
+  const direction=total>=50?(bias==='LONG'?'LONG':'SHORT'):'NO TRADE';
+  const hasDiv=cvdDiv!=='NONE';
+  const isExhaust=tsRegime==='EXHAUSTION';
+  const risk=(grade==='A'&&!hasDiv&&!isExhaust&&regime!=='UNCERTAIN')?'LOW'
+            :(grade==='C'||hasDiv||isExhaust||regime==='UNCERTAIN'||volState==='HIGH')?'HIGH':'MEDIUM';
+
+  const entry=direction==='LONG'
+    ?`Wait for a bullish close above the Value Area High (${vah.toFixed(4)}) with CVD confirming buy pressure. The last swing high at ${lsh.toFixed(4)} acts as a secondary confirmation level.`
+    :direction==='SHORT'
+    ?`Wait for a bearish close below the Value Area Low (${val.toFixed(4)}) with CVD confirming sell pressure. The last swing low at ${lsl.toFixed(4)} acts as a secondary confirmation level.`
+    :'No entry. Structure or score is below the threshold. Stand aside and wait for a cleaner setup.';
+
+  const invalid=direction==='LONG'
+    ?`This long idea is no longer valid if price closes back below the Value Area High (${vah.toFixed(4)}), or if it breaks below the last swing low (${lsl.toFixed(4)}). Either event means the bullish structure has collapsed.`
+    :direction==='SHORT'
+    ?`This short idea is no longer valid if price closes back above the Value Area Low (${val.toFixed(4)}), or if it reclaims the last swing high (${lsh.toFixed(4)}). Either event means the bearish structure has reversed.`
+    :'No active trade idea. Monitor for structure to develop before planning an entry.';
+
+  return {symbol,tf,lastC,direction,bias,grade,regime,confidence:Math.round(total),
+          risk,entry,invalid,reasoning,conflicts,
+          scores:{structure:sS,location:sL,momentum:sM,orderflow:sO,volatility:sV,total:Math.round(total)},
+          raw:{tsDir,tsRegime,cvdDir,cvdDiv,macdState,structure,vaPos,atrRank,volState}};
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderSignal(sig, priceStr) {
+  const d=sig.direction, cls=d==='LONG'?'long':d==='SHORT'?'short':'';
+
+  document.getElementById('sig-bar').className='signal-bar '+cls;
+  const dirEl=document.getElementById('sig-dir');
+  dirEl.textContent=d; dirEl.className='sig-dir '+cls;
+
+  document.getElementById('sig-asset').textContent=sig.symbol+' / '+sig.tf;
+  document.getElementById('sig-tf').textContent=`Timeframe: ${sig.tf}  ·  Last price: ${priceStr}`;
+
+  const gp=document.getElementById('grade-pill');
+  gp.textContent='GRADE '+sig.grade; gp.className='grade-pill '+cls;
+  document.getElementById('regime-mini').textContent=sig.regime;
+
+  document.getElementById('conf-val').innerHTML=sig.confidence+'<span>/100</span>';
+  const mf=document.getElementById('meter-fill'); mf.style.width=sig.confidence+'%'; mf.className='meter-fill '+cls;
+  document.getElementById('conf-sub').textContent=sig.confidence>=75?'High conviction — multiple layers aligned':sig.confidence>=60?'Moderate conviction — most layers confirm':sig.confidence>=50?'Low conviction — weak alignment':'Below trade threshold';
+
+  document.getElementById('stat-sym').textContent=sig.symbol+' · '+sig.tf;
+  document.getElementById('stat-price').textContent=priceStr;
+  document.getElementById('stat-time').textContent='Updated '+new Date().toLocaleTimeString();
+
+  // Score bars
+  const mx=25;
+  function setBar(id,v){document.getElementById('sf-'+id).style.width=Math.min(100,Math.abs(v)/mx*100)+'%';document.getElementById('sf-'+id).className='score-fill '+(v>=0?'pos':'neg');document.getElementById('sv-'+id).textContent=(v>=0?'+':'')+v;}
+  setBar('st',sig.scores.structure); setBar('lo',sig.scores.location); setBar('mo',sig.scores.momentum);
+  setBar('of',sig.scores.orderflow); setBar('vo',sig.scores.volatility);
+  const tb=document.getElementById('score-total');
+  tb.textContent=sig.scores.total+'/100';
+  tb.style.background=sig.scores.total>=75?'var(--long-bg)':sig.scores.total>=60?'var(--amber-bg)':'var(--surface-3)';
+  tb.style.color=sig.scores.total>=75?'var(--long)':sig.scores.total>=60?'var(--amber)':'var(--text-dim)';
+
+  // Regime
+  const rColors={TRENDING:'#5ab4e0',RANGING:'#a8c4d8',BREAKOUT:'#00d88a',EXHAUSTION:'#ff4d6d',UNCERTAIN:'#f5a623'};
+  const rDescs={TRENDING:'Price is accepted outside the Value Area. Directional signals carry full weight.',RANGING:'Price is inside the Value Area. Location signals matter most.',BREAKOUT:'Volatility expanding after compression. Fast environment — fakeout risk elevated.',EXHAUSTION:'Volatility at extremes. Overextended move. Avoid new entries.',UNCERTAIN:'Market context unclear. Confidence penalized. Score must exceed 80 to generate a trade.'};
+  const rn=document.getElementById('regime-name');
+  rn.textContent=sig.regime; rn.style.color=rColors[sig.regime]||'var(--text-primary)';
+  document.getElementById('regime-desc').textContent=rDescs[sig.regime]||'';
+  document.getElementById('rc-fill').style.width=(sig.confidence)+'%';
+  document.getElementById('rc-val').textContent=Math.round(sig.confidence/10)+'/10';
+  const rb=document.getElementById('regime-badge');
+  rb.textContent=sig.regime; rb.style.background=(rColors[sig.regime]||'#999')+'22'; rb.style.color=rColors[sig.regime]||'var(--text-dim)';
+
+  // Reasoning
+  document.getElementById('reasoning-list').innerHTML=sig.reasoning.length
+    ?sig.reasoning.map(r=>`<div class="reason-item"><div class="r-dot"></div><span>${r}</span></div>`).join('')
+    :'<div class="empty-state">No reasoning available</div>';
+
+  // Conflicts
+  const cp=document.getElementById('conflict-panel');
+  if(sig.conflicts.length){cp.style.display='block';document.getElementById('conflict-count').textContent=sig.conflicts.length;document.getElementById('conflict-list').innerHTML=sig.conflicts.map(c=>`<div class="conflict-item">${c}</div>`).join('');}
+  else cp.style.display='none';
+
+  // Entry + Invalidation
+  document.getElementById('entry-logic').textContent=sig.entry;
+  document.getElementById('invalid-text').textContent=sig.invalid;
+
+  // Risk
+  const rp=document.getElementById('risk-pill');
+  rp.textContent=sig.risk; rp.className='risk-pill '+sig.risk;
+  const rText={LOW:'All layers aligned with no significant warnings. Use standard position sizing.',MEDIUM:'Some conflicts or moderate conditions. Consider reducing position size by 25–50%.',HIGH:'Significant conflicts, divergence, or unfavorable conditions. Skip or use minimum size with tight invalidation.'};
+  document.getElementById('risk-text').textContent=rText[sig.risk]||'—';
+
+  // Calibration
+  document.getElementById('cal-panel').style.display='block';
+  const calPct={A:58,B:52,C:48,NONE:40};
+  document.getElementById('cal-pct').textContent=(calPct[sig.grade]||45)+'%';
+  const calNote={A:'High-alignment setup. Strongest bucket historically, but still requires a confirmed entry trigger before committing. Edge disappears without discipline.',B:'Moderate alignment. Edge is meaningful but thin — execution and risk management matter more than signal strength at this grade.',C:'Weak alignment. Expected value near breakeven. Very sensitive to spread and slippage. Most disciplined traders skip C-grade setups entirely.',NONE:'No tradeable setup. Score is below threshold. No statistical edge in this configuration.'};
+  document.getElementById('cal-note').textContent=calNote[sig.grade]||'—';
+
+  // Audit
+  renderAudit(sig);
+
+  // Session log
+  sessionLog.unshift({dir:d,grade:sig.grade,conf:sig.confidence,sym:sig.symbol,tf:sig.tf,ts:new Date().toLocaleTimeString()});
+  if(sessionLog.length>12)sessionLog.pop();
+  document.getElementById('mem-badge').textContent=sessionLog.length;
+  document.getElementById('mem-log').innerHTML=sessionLog.map(t=>`<div class="mem-item"><span class="mem-dir ${t.dir==='LONG'?'LONG':t.dir==='SHORT'?'SHORT':'NT'}">${t.dir}</span><span style="font-size:10px;color:var(--text-dim)">${t.sym}</span><span class="mem-grade">${t.grade}</span><span style="font-size:10px;color:var(--text-dim)">${t.conf}%</span><span style="font-size:10px;color:var(--text-dim)">${t.ts}</span></div>`).join('');
+
+  lastSig=sig;
+  setLive(true);
+  document.getElementById('last-update').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+  updatePill();
+}
+
+function renderAudit(sig) {
+  const pills=[],details=[];let score=0;
+  const r=sig.raw;
+  const momOvlp=(r.macdState.includes(r.tsDir==='BULLISH'?'BULLISH':'BEARISH'));
+  const st1=momOvlp?'warn':'pass';pills.push({l:'INDEPENDENCE',s:st1});
+  details.push({s:st1,t:momOvlp?'MACD and Trend Speed share directional state (expected overlap — both measure price rate-of-change). Treated as one combined momentum vote in V3 to eliminate double-counting.':'Signal layers sufficiently independent. No critical overlap detected.'});
+  score+=st1==='pass'?9:6;
+
+  const biasLoop=sig.scores.structure!==0;
+  const st2=biasLoop?'warn':'pass';pills.push({l:'BIAS CONTROL',s:st2});
+  details.push({s:st2,t:biasLoop?'ZigZag feeds both structure scoring and regime (V2 architecture). V3 removes ZigZag from regime classification — regime now derived from ATR + PAVP only, breaking the feedback loop.':'No active self-reinforcing bias loop. Structure score is neutral.'});
+  score+=st2==='pass'?9:6;
+
+  const vals=Object.values(sig.scores).slice(0,5).map(Math.abs);
+  const mx=Math.max(...vals),tot=vals.reduce((a,b)=>a+b,0)||1,dom=mx/tot;
+  const st3=dom>0.55?'fail':dom>0.4?'warn':'pass';pills.push({l:'SCORE VALIDITY',s:st3});
+  details.push({s:st3,t:`One layer accounts for ${Math.round(dom*100)}% of score magnitude. ${dom>0.55?'Single-layer dominance — confidence may be overstated.':dom>0.4?'Moderate concentration — multiple confirming layers is ideal.':'Score distributed across layers. Multi-factor alignment confirmed.'}`});
+  score+=st3==='pass'?9:st3==='warn'?7:4;
+
+  const regBad=(sig.direction==='LONG'&&sig.regime==='EXHAUSTION')||(sig.direction==='SHORT'&&sig.regime==='BREAKOUT');
+  const st4=regBad?'fail':sig.regime==='UNCERTAIN'?'warn':'pass';pills.push({l:'REGIME',s:st4});
+  details.push({s:st4,t:regBad?`Direction (${sig.direction}) conflicts with regime (${sig.regime}). Elevated false signal probability.`:sig.regime==='UNCERTAIN'?'Regime unclear. Confidence penalized. Signal requires 80+ to be valid.':'Trade direction is coherent with the detected market regime.'});
+  score+=st4==='pass'?9:st4==='warn'?6:3;
+
+  const nearEdge=[75,60,50].some(t=>Math.abs(sig.confidence-t)<=2);
+  const st5=nearEdge?'warn':'pass';pills.push({l:'STABILITY',s:st5});
+  details.push({s:st5,t:nearEdge?`Confidence (${sig.confidence}) is within 2 points of a grade boundary. Minor data changes could flip the setup grade.`:`Confidence (${sig.confidence}) is stable — not near a grade decision boundary.`});
+  score+=st5==='pass'?9:6;
+
+  const fails=pills.filter(p=>p.s==='fail').length,warns=pills.filter(p=>p.s==='warn').length;
+  const overall=fails>0?{s:'fail',l:'FLAGGED'}:warns>=2?{s:'warn',l:'CAUTION'}:{s:'pass',l:'PASS'};
+  document.getElementById('audit-badge').textContent=overall.l;
+  document.getElementById('audit-badge').className='audit-overall '+overall.s;
+  document.getElementById('audit-pills').innerHTML=pills.map(p=>`<div class="a-pill ${p.s}"><div class="a-dot"></div>${p.l}</div>`).join('');
+  document.getElementById('audit-details').innerHTML=details.map((d,i)=>`<div class="adi"><span class="adi-icon ${d.s}">${d.s==='pass'?'✓':d.s==='warn'?'▲':'✕'}</span><span class="adi-text"><strong>${pills[i].l}:</strong> ${d.t}</span></div>`).join('');
+  const iv=document.getElementById('integrity-val');
+  iv.textContent=score+' / 50';
+  iv.style.color=score>=45?'var(--pass)':score>=35?'var(--amber)':'var(--fail)';
+}
+
+// ── MAIN FETCH ────────────────────────────────────────────────
+async function fetchSignal() {
+  if(!curSym){showErr('Select or enter a symbol first.');return;}
+  const btn=document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  document.getElementById('btn-icon').innerHTML='<span class="spin">↻</span>';
+  document.getElementById('btn-label').textContent='FETCHING LIVE DATA…';
+  document.getElementById('err-banner').style.display='none';
+  document.getElementById('record-btn').disabled=true;
+  try {
+    let sig=null, priceStr='—';
+
+    // ① Try FastAPI server (local Python pipeline, free data, no Claude)
+    if (serverOnline) {
+      try {
+        const r = await fetch(
+          `${SERVER}/market/${encodeURIComponent(curSym)}?timeframe=${curTF}&bars=200`,
+          {signal: AbortSignal.timeout(15000)}
+        );
+        if (r.ok) {
+          const data = await r.json();
+          sig      = serverResponseToSignal(data);
+          priceStr = data.price?.close?.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}) || '—';
+        }
+      } catch(e) { /* server timed out — fall through to JS */ }
+    }
+
+    // ② Fallback: Yahoo Finance + JS indicator engine (always works offline)
+    if (!sig) {
+      const bars = await fetchYahoo(curSym, TF_INTERVAL[curTF]||'5m', TF_PERIOD[curTF]||'5d');
+      const ind  = runIndicators(bars);
+      sig        = scoreSignal(ind, curSym, curTF);
+      priceStr   = sig.lastC.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+    }
+
+    renderSignal(sig, priceStr);
+    document.getElementById('record-btn').disabled=false;
+  } catch(e) {
+    showErr(e.message);
+    setLive(false);
+  }
+  btn.classList.remove('loading');
+  document.getElementById('btn-icon').textContent='↻';
+  document.getElementById('btn-label').textContent='ANALYZE NOW';
+}
+
+function showErr(msg) {
+  const b=document.getElementById('err-banner');
+  b.textContent=msg;
+  b.style.display='block';
+}
+
+// ── AUTO REFRESH — 60s ────────────────────────────────────────
+if(autoTimer)clearInterval(autoTimer);
+autoTimer=setInterval(fetchSignal,60000);
+
+// Re-check server status every 30s
+setInterval(checkServer, 30000);
+
+// ── INIT ──────────────────────────────────────────────────────
+updatePill();
+renderTradeMemory();   // load persisted trades from localStorage
+checkServer();         // detect FastAPI backend; syncs server trades if online
+fetchSignal();         // first analysis on load
+</script>
+</body>
+</html>

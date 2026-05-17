@@ -1,0 +1,177 @@
+MACD — INDICATOR DEFINITION
+═══════════════════════════════════════════════════════════
+
+Source      : Moving Average Convergence Divergence (Built-in)
+Author      : TradingView (standard built-in indicator)
+Pine Script : v6
+License     : TradingView standard
+Role        : Momentum direction confirmation (MEDIUM PRIORITY)
+Usage       : All three values are native plot() outputs.
+              Zero modification required for webhook.
+              Most webhook-ready script in the entire stack.
+
+═══════════════════════════════════════════════════════════
+WHAT THIS INDICATOR DOES
+═══════════════════════════════════════════════════════════
+
+Standard MACD calculation — unmodified TradingView built-in:
+
+  maFast  = EMA(close, 12)
+  maSlow  = EMA(close, 26)
+  macd    = maFast - maSlow     → MACD line
+  signal  = EMA(macd, 9)        → Signal line
+  hist    = macd - signal       → Histogram
+
+Inputs (default):
+  Fast length   : 12
+  Slow length   : 26
+  Signal length : 9
+  Oscillator MA : EMA
+  Signal MA     : EMA
+  Source        : close
+
+═══════════════════════════════════════════════════════════
+WEBHOOK COMPATIBILITY
+═══════════════════════════════════════════════════════════
+
+STATUS: FULLY READY — Zero modification needed
+
+All three values plotted natively:
+  plot(hist,   "Histogram")    → {{plot_0}} in alert
+  plot(macd,   "MACD")         → {{plot_1}} in alert
+  plot(signal, "Signal line")  → {{plot_2}} in alert
+
+Built-in alert conditions (event-based, fires once):
+  "Rising to falling" — hist flips from positive to negative
+  "Falling to rising" — hist flips from negative to positive
+
+For continuous state reporting use the plot() values
+via webhook payload on Essential+ TradingView plan.
+
+═══════════════════════════════════════════════════════════
+HISTOGRAM COLOR LOGIC — 4 STATES
+═══════════════════════════════════════════════════════════
+
+The histogram color encodes 4 distinct market states
+that carry meaningfully different trading implications:
+
+State 1 — BULLISH_ACCELERATING  (#26a69a — bright teal)
+  hist > 0 AND hist > hist[1]
+  Meaning: Momentum is positive AND growing
+  Implication: Strong bullish confirmation
+
+State 2 — BULLISH_DECELERATING  (#b2dfdb — faded teal)
+  hist > 0 AND hist <= hist[1]
+  Meaning: Momentum is positive BUT shrinking
+  Implication: Bulls losing strength, watch for flip
+  ⚠ Early warning signal — do not chase entries
+
+State 3 — BEARISH_RECOVERING    (#ffcdd2 — faded red)
+  hist < 0 AND hist > hist[1]
+  Meaning: Momentum is negative BUT improving
+  Implication: Bears losing grip, potential reversal forming
+
+State 4 — BEARISH_ACCELERATING  (#ff5252 — bright red)
+  hist < 0 AND hist <= hist[1]
+  Meaning: Momentum is negative AND worsening
+  Implication: Strong bearish confirmation
+
+═══════════════════════════════════════════════════════════
+ALL SIGNAL FORMAT FIELDS
+═══════════════════════════════════════════════════════════
+
+macd_line           : float  — maFast - maSlow
+signal_line         : float  — EMA(macd, 9)
+histogram           : float  — macd - signal
+
+histogram_state     : string — 4-state classification
+  "BULLISH_ACCELERATING"  hist > 0 and rising
+  "BULLISH_DECELERATING"  hist > 0 and falling
+  "BEARISH_RECOVERING"    hist < 0 and rising
+  "BEARISH_ACCELERATING"  hist < 0 and falling
+
+histogram_direction : string — simplified 2-state
+  "RISING"   hist > hist[1]
+  "FALLING"  hist <= hist[1]
+
+zero_line_position  : string
+  "ABOVE"  macd > 0  (bullish regime confirmed)
+  "BELOW"  macd < 0  (bearish regime, watch for crossover)
+
+signal_cross        : string — crossover event
+  "BULLISH_CROSS"  macd crossed above signal this bar
+  "BEARISH_CROSS"  macd crossed below signal this bar
+  "NONE"           no cross this bar
+
+═══════════════════════════════════════════════════════════
+PYTHON COMPUTATION LOGIC
+═══════════════════════════════════════════════════════════
+
+def compute_macd(close, fast=12, slow=26, signal=9):
+    ma_fast = close.ewm(span=fast, adjust=False).mean()
+    ma_slow = close.ewm(span=slow, adjust=False).mean()
+    macd    = ma_fast - ma_slow
+    sig     = macd.ewm(span=signal, adjust=False).mean()
+    hist    = macd - sig
+    return macd, sig, hist
+
+def get_histogram_state(hist, hist_prev):
+    if hist > 0 and hist > hist_prev:
+        return "BULLISH_ACCELERATING"
+    elif hist > 0 and hist <= hist_prev:
+        return "BULLISH_DECELERATING"
+    elif hist < 0 and hist > hist_prev:
+        return "BEARISH_RECOVERING"
+    return "BEARISH_ACCELERATING"
+
+def get_signal_cross(macd, macd_prev, signal, signal_prev):
+    if macd > signal and macd_prev <= signal_prev:
+        return "BULLISH_CROSS"
+    if macd < signal and macd_prev >= signal_prev:
+        return "BEARISH_CROSS"
+    return "NONE"
+
+def get_zero_line(macd):
+    return "ABOVE" if macd > 0 else "BELOW"
+
+═══════════════════════════════════════════════════════════
+SCORING CONTRIBUTION
+═══════════════════════════════════════════════════════════
+
+Priority : MEDIUM (Momentum layer, max +10 / min -7)
+
+BULLISH_ACCELERATING + ABOVE zero    → +10  (full confirm)
+BULLISH_ACCELERATING + BELOW zero    → +6   (building)
+BULLISH_DECELERATING + ABOVE zero    → +3   (weakening)
+BULLISH_DECELERATING + BELOW zero    → +1   (minimal)
+BEARISH_RECOVERING                   → -2
+BEARISH_ACCELERATING + BELOW zero    → -7   (full bear confirm)
+BEARISH_ACCELERATING + ABOVE zero    → -4
+BULLISH_CROSS aligned with bias      → +3   bonus
+BEARISH_CROSS aligned with bias      → +3   bonus
+Cross opposing bias                  → -3   penalty
+
+═══════════════════════════════════════════════════════════
+IMPORTANT BEHAVIOURAL NOTES
+═══════════════════════════════════════════════════════════
+
+- BULLISH_DECELERATING is an EARLY WARNING signal
+  Never chase entries when MACD is decelerating
+  Most false breakouts occur in this state
+
+- BEARISH_RECOVERING does NOT mean bullish
+  It means bearish momentum is losing force
+  Treat as neutral-to-cautious, not as a long signal
+
+- zero_line_position matters significantly:
+  BULLISH_ACCELERATING above zero = confirmed bull trend
+  BULLISH_ACCELERATING below zero = recovering from bear
+  The latter is weaker and should score lower
+
+- signal_cross carries timing information
+  A fresh BULLISH_CROSS on the current bar = entry zone
+  A cross from 5+ bars ago = no longer relevant as trigger
+
+- MACD lags by nature — it confirms, it does not lead
+  Never use MACD as a primary entry trigger alone
+  Always require ZigZag structure + PAVP location first

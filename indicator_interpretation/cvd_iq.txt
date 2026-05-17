@@ -1,0 +1,202 @@
+CVD IQ — INDICATOR DEFINITION
+═══════════════════════════════════════════════════════════
+
+Source      : CVD IQ [TradingIQ]
+Author      : © Trading-IQ
+Pine Script : v6
+License     : Mozilla Public License 2.0
+Role        : Order flow validation (VARIABLE PRIORITY)
+Usage       : Partial plot() outputs exist. Most advanced
+              fields computed in Python backend from
+              lower-timeframe volume data.
+
+═══════════════════════════════════════════════════════════
+WHAT THIS INDICATOR DOES — 7 LAYERS
+═══════════════════════════════════════════════════════════
+
+Layer 1 — Core CVD (Cumulative Volume Delta)
+  Aggregates lower-timeframe (default 1-min) volume
+  directionally into the current timeframe bars.
+  direction() = +1 if close > prev close (buy aggression)
+              = -1 if close < prev close (sell aggression)
+  currentCVD = running sum of (volume * direction)
+  This is TRUE cumulative delta, not an approximation.
+
+Layer 2 — Divergence Detection (3 scales)
+  Detects when price makes a new extreme but CVD does not.
+  isDivBull  / isDivBear   → small  divergence (length 2)
+  isDivBullMed/isDivBearMed→ medium divergence (length 5)
+  isDivBullLar/isDivBearLar→ large  divergence (length 10)
+
+  Bearish divergence = price higher high, CVD lower high
+    (selling hidden behind rising price = weakness)
+  Bullish divergence = price lower low, CVD higher low
+    (buying hidden behind falling price = strength)
+
+Layer 3 — Aggression Analysis (Bar / Day / Swing windows)
+  buyAggNow   = aggressive buy volume this bar
+  sellAggNow  = aggressive sell volume this bar
+  netDeltaNow = buyAggNow - sellAggNow
+  buyPctNow   = buyAgg / totalAgg * 100
+  imbalanceNow = buyAgg / sellAgg ratio
+
+Layer 4 — CVD Cost Per Tick
+  flowPerTickNow = delta required per tick of price movement
+  costStateText  = "Very High Cost" / "High Cost" /
+                   "Normal Cost" / "Low Cost" / "Very Low Cost"
+  Very High Cost = price moving on heavy real participation
+  Very Low Cost  = price moving with minimal delta (weak/suspicious)
+
+Layer 5 — Absorption Detection
+  buyAbsorption  = buyers dominate volume BUT price closes down
+    → buyers absorbing sell pressure = bullish hidden strength
+  sellAbsorption = sellers dominate volume BUT price closes up
+    → sellers absorbing buy pressure = bearish hidden strength
+
+Layer 6 — Delta-Implied Close
+  expectedClose = where price should close based on delta
+  moveRatio     = actual move / expected move
+    1.0 = normal, >1.5 = overextended, <0.5 = suppressed
+
+Layer 7 — CVD Moving Averages
+  currentCVDma1 = fast MA of CVD (default EMA 50)
+  currentCVDma2 = slow MA of CVD (default EMA 200)
+  ma_bias = fast vs slow relationship + CVD position
+
+═══════════════════════════════════════════════════════════
+WEBHOOK COMPATIBILITY
+═══════════════════════════════════════════════════════════
+
+STATUS: PARTIAL — Some plot() outputs exist
+
+Existing plots (webhook-accessible on paid plan):
+  plot(currentCVDma1)  → CVD fast MA value
+  plot(currentCVDma2)  → CVD slow MA value
+  plotcandle(currentCVD[1], maxCVDintra, minCVDintra, currentCVD)
+    → CVD open/high/low/close per bar
+
+Not accessible via webhook (computed only at barstate.islast
+or stored in arrays/types):
+  isDivBull/Bear (all scales)
+  aggression metrics
+  cost state
+  absorption state
+  delta-implied close
+
+Resolution: All advanced fields computed in Python backend
+from lower-timeframe OHLCV volume data.
+
+═══════════════════════════════════════════════════════════
+ALL SIGNAL FORMAT FIELDS
+═══════════════════════════════════════════════════════════
+
+current_cvd         : float  — running cumulative delta value
+cvd_direction       : string — "BUYING" | "SELLING" | "NEUTRAL"
+
+divergence:
+  small             : string — "BULLISH" | "BEARISH" | "NONE"
+  medium            : string — "BULLISH" | "BEARISH" | "NONE"
+  large             : string — "BULLISH" | "BEARISH" | "NONE"
+
+aggression:
+  buy_pct           : float  — % of total aggression from buyers
+  sell_pct          : float  — % of total aggression from sellers
+  net_delta         : float  — buyAgg - sellAgg
+  imbalance_ratio   : float  — buyAgg / sellAgg
+  dominant_side     : string — "BUY" | "SELL" | "BALANCED"
+
+cost:
+  cost_per_tick     : float  — delta per tick of price movement
+  cost_state        : string — "VERY_HIGH" | "HIGH" | "NORMAL" |
+                               "LOW" | "VERY_LOW"
+
+absorption:
+  type              : string — "BUY_ABSORPTION" | "SELL_ABSORPTION" | "NONE"
+
+delta_implied:
+  expected_close    : float  — delta-implied expected close price
+  move_ratio        : float  — actual / expected (1.0 = normal)
+
+ma:
+  fast              : float  — CVD fast MA value
+  slow              : float  — CVD slow MA value
+  ma_bias           : string — "ABOVE" | "BELOW" | "CROSSING"
+
+═══════════════════════════════════════════════════════════
+PYTHON COMPUTATION LOGIC
+═══════════════════════════════════════════════════════════
+
+def compute_cvd(df_ltf):
+    """Compute CVD from lower-timeframe OHLCV data."""
+    direction = np.sign(df_ltf['close'] - df_ltf['close'].shift(1))
+    delta = df_ltf['volume'] * direction
+    return delta.cumsum()
+
+def get_cvd_direction(net_delta, total_agg, threshold=0.55):
+    buy_pct = (net_delta + total_agg) / (2 * total_agg)
+    if buy_pct > threshold:
+        return "BUYING"
+    elif buy_pct < (1 - threshold):
+        return "SELLING"
+    return "NEUTRAL"
+
+def get_cost_state(cost_per_tick, cost_history):
+    rank = percentile_rank(cost_history, cost_per_tick)
+    if rank >= 90: return "VERY_HIGH"
+    if rank >= 75: return "HIGH"
+    if rank <= 10: return "VERY_LOW"
+    if rank <= 25: return "LOW"
+    return "NORMAL"
+
+def detect_absorption(buy_agg, sell_agg, close, open_):
+    buy_dominant  = buy_agg > sell_agg
+    sell_dominant = sell_agg > buy_agg
+    if buy_dominant and close <= open_:
+        return "BUY_ABSORPTION"
+    if sell_dominant and close >= open_:
+        return "SELL_ABSORPTION"
+    return "NONE"
+
+def get_divergence(price_pivots, cvd_pivots, direction):
+    """Detect divergence between price and CVD pivot structure."""
+    if direction == 1:  # price making higher high
+        if cvd_pivots[-1] < cvd_pivots[-2]:
+            return "BEARISH"
+    if direction == -1:  # price making lower low
+        if cvd_pivots[-1] > cvd_pivots[-2]:
+            return "BULLISH"
+    return "NONE"
+
+═══════════════════════════════════════════════════════════
+SCORING CONTRIBUTION
+═══════════════════════════════════════════════════════════
+
+Priority : VARIABLE (Order Flow layer, max +15 / min -20)
+
+cvd_direction confirms bias         → +10
+absorption detected                 → +5
+cost VERY_HIGH + aligned            → +5
+cost HIGH + aligned                 → +2
+cost VERY_LOW                       → -5
+divergence.large opposing           → -15  (highest severity)
+divergence.medium opposing          → -10
+divergence.small opposing           → -5
+move_ratio > 1.5 (overextended)     → -5
+move_ratio < 0.5 (suppressed)       → -3
+ma_bias aligned                     → +2
+imbalance_ratio > 1.5 aligned       → +1
+
+═══════════════════════════════════════════════════════════
+IMPORTANT BEHAVIOURAL NOTES
+═══════════════════════════════════════════════════════════
+
+- Large CVD divergence OVERRIDES weak momentum confirmation
+- Absorption is a COUNTER-INTUITIVE confirmation signal
+  (buyers absorbing = price may drop but buyers are in control)
+- VERY_LOW cost = price moved cheaply = suspicious move
+  Could be a stop hunt or low-participation drift
+- move_ratio > 1.5 = price moved more than delta justified
+  = overextended, reversal risk elevated
+- CVD is context-dependent: trust level varies by regime
+  In trending markets: weight lower (trends can persist despite divergence)
+  In ranging markets: weight higher (divergence more predictive)

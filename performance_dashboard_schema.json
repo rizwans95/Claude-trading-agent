@@ -1,0 +1,76 @@
+{
+  "session_id": "",
+  "start_time": "",
+  "end_time": "",
+
+  "performance_summary": {
+    "total_trades": 0,
+    "winning_trades": 0,
+    "losing_trades": 0,
+    "win_rate": 0,
+    "average_r_multiple": 0,
+    "profit_factor": 0
+  },
+
+  "strategy_quality_metrics": {
+    "average_confidence": 0,
+    "a_grade_trade_win_rate": 0,
+    "b_grade_trade_win_rate": 0,
+    "c_grade_trade_win_rate": 0
+  },
+
+  "regime_performance": {
+    "TRENDING_UP": {},
+    "TRENDING_DOWN": {},
+    "RANGING": {},
+    "BREAKOUT": {},
+    "REVERSAL": {}
+  },
+
+  "indicator_performance": {
+    "pavp": {
+      "accuracy": 0,
+      "failure_rate": 0,
+      "bias_quality": ""
+    },
+    "zigzag": {
+      "accuracy": 0,
+      "failure_rate": 0
+    },
+    "macd": {
+      "accuracy": 0,
+      "failure_rate": 0
+    },
+    "trend_speed": {
+      "accuracy": 0,
+      "failure_rate": 0
+    },
+    "cvd": {
+      "accuracy": 0,
+      "failure_rate": 0
+    },
+    "atr": {
+      "filter_effectiveness": 0
+    }
+  },
+
+  "error_distribution": {
+    "structure_error": 0,
+    "momentum_error": 0,
+    "order_flow_error": 0,
+    "location_error": 0,
+    "volatility_error": 0,
+    "overconfidence_error": 0
+  },
+
+  "confidence_calibration": {
+    "overconfident_zone_accuracy": 0,
+    "underconfident_zone_accuracy": 0,
+    "calibration_score": 0
+  },
+
+  "system_adjustments": {
+    "recommended_weight_changes": {},
+    "recommended_rule_changes": []
+  }
+}

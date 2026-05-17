@@ -1,0 +1,125 @@
+{
+  "symbol": "AAPL",
+  "timeframe": "15m",
+  "total_bars": 1560,
+  "total_signals": 624,
+  "total_trades": 46,
+  "rr_ratio": 2.0,
+  "by_grade": {
+    "A": {
+      "count": 27,
+      "wins": 9,
+      "losses": 18,
+      "win_rate": 33.3,
+      "avg_confidence": 89.2,
+      "expectancy_r": -0.0
+    },
+    "B": {
+      "count": 19,
+      "wins": 6,
+      "losses": 13,
+      "win_rate": 31.6,
+      "avg_confidence": 68.8,
+      "expectancy_r": -0.053
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    },
+    "NONE": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    }
+  },
+  "by_regime": {
+    "TRENDING_UP": {
+      "count": 39,
+      "win_rate": 33.3
+    },
+    "TRENDING_DOWN": {
+      "count": 7,
+      "win_rate": 28.6
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 39,
+      "win_rate": 33.3
+    },
+    "SHORT": {
+      "count": 7,
+      "win_rate": 28.6
+    }
+  },
+  "by_hour": {
+    "9": {
+      "count": 7,
+      "win_rate": 14.3
+    },
+    "10": {
+      "count": 6,
+      "win_rate": 66.7
+    },
+    "11": {
+      "count": 7,
+      "win_rate": 14.3
+    },
+    "12": {
+      "count": 7,
+      "win_rate": 14.3
+    },
+    "13": {
+      "count": 5,
+      "win_rate": 20.0
+    },
+    "14": {
+      "count": 3,
+      "win_rate": 66.7
+    },
+    "15": {
+      "count": 11,
+      "win_rate": 45.5
+    }
+  },
+  "score_buckets": {
+    "75-100": {
+      "count": 27,
+      "win_rate": 33.3
+    },
+    "60-74": {
+      "count": 19,
+      "win_rate": 31.6
+    },
+    "50-59": {
+      "count": 0,
+      "win_rate": 0.0
+    }
+  },
+  "no_trade_filter_effectiveness": {
+    "engine_no_trade": 836,
+    "filter_rejected": 383,
+    "total_blocked": 1219,
+    "pct_of_total_bars": 78.1
+  },
+  "active_filters": {
+    "skip_grade_c": true,
+    "skip_breakout": true,
+    "skip_opposing_mom": true,
+    "min_conf_A": 80.0,
+    "min_conf_B": 65.0
+  },
+  "calibration_table": {
+    "A": 33.3,
+    "B": 31.6,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}

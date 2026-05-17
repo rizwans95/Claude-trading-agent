@@ -1,0 +1,85 @@
+REGIME_DETECTION_V3
+
+This module classifies current market conditions into a trading regime.
+
+It does NOT generate trades.
+It ONLY defines context for decision-making layers.
+
+────────────────────────────────────────
+V3 ARCHITECTURAL CHANGE — CIRCULARITY FIX
+────────────────────────────────────────
+
+V2 used ZigZag, MACD, Trend Speed, and CVD to classify regime.
+All four of those are also direct scoring inputs.
+
+This created a feedback loop:
+  - Bullish ZigZag → TRENDING_UP regime
+  - TRENDING_UP regime → reduced penalty thresholds
+  - ZigZag also scores +25 in the structure layer
+  - Score confidence borrowed from the same source as regime
+
+V3 fixes this by deriving regime ONLY from:
+  - ATR (volatility/context — not directional)
+  - PAVP location (auction zone — not directional scoring input)
+
+ZigZag, MACD, Trend Speed, and CVD are now scoring-only.
+They do NOT influence regime classification.
+
+────────────────────────────────────────
+V3 REGIME CLASSES (4 + UNCERTAIN)
+────────────────────────────────────────
+
+1. TRENDING
+   - Price accepted outside Value Area (ABOVE_VA or BELOW_VA)
+   - ATR NORMAL or HIGH (but not extreme >90th percentile)
+   - ATR expansion not required
+
+2. RANGING
+   - Price inside Value Area (INSIDE_VA)
+   - ATR LOW or NORMAL (compressed or flat)
+
+3. BREAKOUT
+   - Price outside Value Area
+   - ATR was compressing, now expanding (compression=False + expansion=True)
+   - ATR state NORMAL or HIGH
+
+4. EXHAUSTION
+   - ATR percentile rank > 90 (extreme volatility spike)
+   - Signals late-move risk regardless of direction
+
+5. UNCERTAIN
+   - Cannot classify cleanly from ATR + PAVP alone
+   - Apply confidence penalty; require higher threshold to trade
+
+────────────────────────────────────────
+INPUTS USED (V3 — non-circular)
+────────────────────────────────────────
+
+- ATR: volatility_state, compression, expansion, percentile_rank
+- PAVP: value_area_position, value_area_width_pct
+
+NOT used for regime (scoring-only):
+- ZigZag Structure
+- MACD
+- Trend Speed Analyzer
+- CVD IQ
+
+────────────────────────────────────────
+REGIME → SCORING INTERACTION
+────────────────────────────────────────
+
+TRENDING:   No base penalty. Standard scoring thresholds apply.
+RANGING:    No base penalty. Location layer weighted more heavily by context.
+BREAKOUT:   No base penalty. Momentum signals carry higher weight by context.
+EXHAUSTION: No base penalty on score, but risk_state forced to HIGH.
+            Calibration note warns of reduced expected edge.
+UNCERTAIN:  Base score penalized (-10). Requires score ≥ 80 to produce trade signal.
+
+────────────────────────────────────────
+OUTPUT FORMAT
+────────────────────────────────────────
+
+Return:
+1. Active Regime (one of 5)
+2. Derivation sources (ATR state + PAVP position)
+3. Regime implication for scoring layer

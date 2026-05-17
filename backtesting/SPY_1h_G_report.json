@@ -1,0 +1,96 @@
+{
+  "config": "SPY_1h_G",
+  "symbol": "SPY",
+  "timeframe": "1h",
+  "total_bars": 3483,
+  "total_signals": 3382,
+  "total_trades": 14,
+  "wins": 10,
+  "win_rate": 71.4,
+  "avg_r": 0.051,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 5,
+      "win_rate": 80.0,
+      "avg_r": 0.159
+    },
+    "B": {
+      "count": 9,
+      "win_rate": 66.7,
+      "avg_r": -0.009
+    },
+    "C": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 14,
+      "win_rate": 71.4,
+      "avg_r": 0.051
+    }
+  },
+  "by_hour": {
+    "13": {
+      "count": 4,
+      "win_rate": 100.0,
+      "avg_r": 0.184
+    },
+    "14": {
+      "count": 5,
+      "win_rate": 80.0,
+      "avg_r": 0.238
+    },
+    "15": {
+      "count": 5,
+      "win_rate": 40.0,
+      "avg_r": -0.243
+    }
+  },
+  "lvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "robustness": {
+    "first_70_pct": {
+      "count": 11,
+      "wins": 8,
+      "win_rate": 72.7,
+      "avg_r": 0.135
+    },
+    "last_30_pct": {
+      "count": 3,
+      "wins": 2,
+      "win_rate": 66.7,
+      "avg_r": -0.26
+    },
+    "first_half": {
+      "count": 7,
+      "wins": 5,
+      "win_rate": 71.4,
+      "avg_r": 0.039
+    },
+    "second_half": {
+      "count": 7,
+      "wins": 5,
+      "win_rate": 71.4,
+      "avg_r": 0.062
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 3382,
+    "no_trade": 3242,
+    "trades_taken": 14,
+    "filter_rate": 99.6
+  },
+  "pnl": {
+    "final": 1012.87,
+    "peak": 1035.1,
+    "max_drawdown_pct": 4.0,
+    "total_return_pct": 1.3
+  }
+}

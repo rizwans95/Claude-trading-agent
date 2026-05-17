@@ -1,0 +1,8 @@
+bar_index,timestamp,hour_of_day,config,symbol,timeframe,direction,grade,confidence,in_lvn,in_hvn,wme_speed,entry_price,stop_loss,targets_hit,r_multiple,outcome,bars_to_outcome
+138,2024-06-11 14:30:00,14,SPY_1h_L,SPY,1h,LONG,B,66.4,False,False,0.7625,535.8625,531.2264,0,1.402,WIN,20
+1141,2025-01-08 14:30:00,14,SPY_1h_L,SPY,1h,LONG,B,60.8,False,False,0.3874,589.09,580.1711,0,-1.0,LOSS,2
+1672,2025-04-30 13:30:00,13,SPY_1h_L,SPY,1h,LONG,B,69.9,False,False,0.3287,550.48,539.4295,0,-0.037,WIN,1
+1827,2025-06-02 14:30:00,14,SPY_1h_L,SPY,1h,LONG,B,60.0,False,False,0.3366,592.4,584.555,0,0.4,WIN,4
+2095,2025-07-29 13:30:00,13,SPY_1h_L,SPY,1h,LONG,B,70.2,False,False,0.344,635.32,631.4321,0,0.522,WIN,10
+2389,2025-09-26 13:30:00,13,SPY_1h_L,SPY,1h,LONG,B,62.1,False,False,0.4719,661.725,655.703,0,0.326,WIN,3
+2606,2025-11-10 13:30:00,13,SPY_1h_L,SPY,1h,LONG,B,60.5,False,False,0.365,680.7815,670.9731,0,-0.075,WIN,1

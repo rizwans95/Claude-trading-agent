@@ -1,0 +1,72 @@
+You are an expert front-end engineer building a trading decision dashboard.
+
+You are given structured JSON output from a FastAPI trading decision engine.
+
+Your job is to generate a SINGLE FILE:
+
+→ dashboard.html
+
+────────────────────────────────────────
+CORE REQUIREMENTS
+────────────────────────────────────────
+
+1. Must be a single standalone HTML file
+   - No external frameworks (no React, no Vue, no CDN dependencies)
+   - Must use only HTML + CSS + vanilla JavaScript
+
+2. Must connect to FastAPI endpoint:
+   http://127.0.0.1:8000/signal
+
+3. Must POST a JSON signal payload and receive response:
+   {
+     decision,
+     score,
+     grade,
+     reasons[]
+   }
+
+4. Must visually display:
+
+- Trade Decision (LONG / SHORT / NO TRADE)
+- Confidence score (0–10)
+- Setup grade (A / B / C / NONE)
+- Reasoning breakdown (bullet list)
+
+5. Must include:
+- dark professional trading UI
+- clear color coding:
+  LONG = green
+  SHORT = red
+  NO TRADE = gray
+
+6. Must include a button:
+   "Get Latest Signal"
+
+7. Must show loading state:
+   - "Analyzing market..."
+
+8. Must handle errors gracefully:
+   - display connection failure message
+
+────────────────────────────────────────
+DESIGN RULES
+────────────────────────────────────────
+
+- minimal institutional trading dashboard style
+- no clutter
+- strong hierarchy of information
+- large decision output in center
+- reasoning in collapsible panel
+
+────────────────────────────────────────
+OUTPUT FORMAT
+────────────────────────────────────────
+
+Return ONLY:
+
+→ dashboard.html file content
+
+No explanations.
+No extra text.
+No markdown.
+Only raw HTML file.

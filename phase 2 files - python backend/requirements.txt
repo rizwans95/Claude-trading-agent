@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+pandas
+numpy
+anthropic
+requests
+yfinance
+openpyxl
+python-multipart

@@ -1,0 +1,211 @@
+{
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "total_bars": 3000,
+  "total_signals": 290,
+  "total_trades": 64,
+  "rr_ratio": 1.8,
+  "by_grade": {
+    "A": {
+      "count": 41,
+      "wins": 13,
+      "losses": 26,
+      "win_rate": 31.7,
+      "avg_confidence": 91.2,
+      "expectancy_r": -0.112
+    },
+    "B": {
+      "count": 23,
+      "wins": 8,
+      "losses": 15,
+      "win_rate": 34.8,
+      "avg_confidence": 70.5,
+      "expectancy_r": -0.026
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    },
+    "NONE": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    }
+  },
+  "by_regime": {
+    "TRENDING_DOWN": {
+      "count": 15,
+      "win_rate": 20.0
+    },
+    "TRENDING_UP": {
+      "count": 47,
+      "win_rate": 36.2
+    },
+    "REVERSAL": {
+      "count": 2,
+      "win_rate": 50.0
+    }
+  },
+  "by_direction": {
+    "SHORT": {
+      "count": 16,
+      "win_rate": 18.8
+    },
+    "LONG": {
+      "count": 48,
+      "win_rate": 37.5
+    }
+  },
+  "by_hour": {
+    "0": {
+      "count": 4,
+      "win_rate": 50.0
+    },
+    "1": {
+      "count": 1,
+      "win_rate": 0.0
+    },
+    "2": {
+      "count": 4,
+      "win_rate": 25.0
+    },
+    "3": {
+      "count": 3,
+      "win_rate": 33.3
+    },
+    "4": {
+      "count": 4,
+      "win_rate": 0.0
+    },
+    "5": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "6": {
+      "count": 1,
+      "win_rate": 100.0
+    },
+    "7": {
+      "count": 3,
+      "win_rate": 66.7
+    },
+    "8": {
+      "count": 1,
+      "win_rate": 0.0
+    },
+    "9": {
+      "count": 4,
+      "win_rate": 50.0
+    },
+    "10": {
+      "count": 1,
+      "win_rate": 0.0
+    },
+    "11": {
+      "count": 6,
+      "win_rate": 16.7
+    },
+    "12": {
+      "count": 2,
+      "win_rate": 0.0
+    },
+    "13": {
+      "count": 3,
+      "win_rate": 0.0
+    },
+    "14": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "15": {
+      "count": 5,
+      "win_rate": 40.0
+    },
+    "16": {
+      "count": 4,
+      "win_rate": 75.0
+    },
+    "17": {
+      "count": 3,
+      "win_rate": 0.0
+    },
+    "18": {
+      "count": 1,
+      "win_rate": 0.0
+    },
+    "19": {
+      "count": 2,
+      "win_rate": 0.0
+    },
+    "20": {
+      "count": 1,
+      "win_rate": 100.0
+    },
+    "21": {
+      "count": 3,
+      "win_rate": 100.0
+    },
+    "23": {
+      "count": 4,
+      "win_rate": 0.0
+    }
+  },
+  "score_buckets": {
+    "75-100": {
+      "count": 41,
+      "win_rate": 31.7
+    },
+    "60-74": {
+      "count": 23,
+      "win_rate": 34.8
+    },
+    "50-59": {
+      "count": 0,
+      "win_rate": 0.0
+    }
+  },
+  "pavp_override_stats": {
+    "count": 0,
+    "wins": 0,
+    "losses": 0,
+    "win_rate": 0.0,
+    "avg_confidence": 0.0,
+    "expectancy_r": -1.0
+  },
+  "cvd_move_ratio_lt05": {
+    "count": 24,
+    "wins": 9,
+    "losses": 15,
+    "win_rate": 37.5,
+    "avg_confidence": 85.7,
+    "expectancy_r": 0.05
+  },
+  "exhaustion_blocks": 37,
+  "no_trade_filter_effectiveness": {
+    "engine_no_trade": 161,
+    "filter_rejected": 65,
+    "exhaustion_blocks": 37,
+    "total_blocked": 263,
+    "pct_of_total_bars": 90.7
+  },
+  "active_filters": {
+    "skip_grade_c": true,
+    "skip_breakout": true,
+    "skip_opposing_mom": true,
+    "min_conf_A": 80.0,
+    "min_conf_B": 65.0
+  },
+  "calibration_table": {
+    "A": 31.7,
+    "B": 34.8,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}

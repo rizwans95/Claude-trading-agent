@@ -1,0 +1,150 @@
+ZIGZAG STRUCTURE — INDICATOR DEFINITION
+═══════════════════════════════════════════════════════════
+
+Source      : Zig-Zag Volume Profile [KioseffTrading]
+Author      : © KioseffTrading
+Pine Script : v5
+License     : Mozilla Public License 2.0
+Role        : Structure truth layer (HIGHEST PRIORITY indicator)
+Usage       : Visual reference on TradingView chart only.
+              All signal values computed in Python backend.
+
+═══════════════════════════════════════════════════════════
+WHAT THIS INDICATOR DOES
+═══════════════════════════════════════════════════════════
+
+Combines two systems in one script:
+
+1. ZigZag Engine
+   Uses TradingView's built-in ZigZag library to detect
+   swing pivot highs and lows based on price deviation %.
+   Draws lines between consecutive pivots.
+
+2. Volume Profile Per Swing Leg
+   For each ZigZag leg, computes a volume profile showing
+   bull volume (green) vs bear volume (red) at each price
+   level within that swing. Also computes POC and Value
+   Area per leg optionally.
+
+═══════════════════════════════════════════════════════════
+WEBHOOK COMPATIBILITY
+═══════════════════════════════════════════════════════════
+
+STATUS: NOT WEBHOOK COMPATIBLE AS-IS
+
+This script uses NO plot() outputs. It draws exclusively
+using polylines, boxes, and labels — none of which are
+accessible via TradingView alerts or webhook payloads.
+
+Resolution: All ZigZag values are replicated in the
+Python backend using an ATR-based ZigZag algorithm
+applied to OHLCV data.
+
+═══════════════════════════════════════════════════════════
+FIELDS COMPUTED BY PYTHON BACKEND
+═══════════════════════════════════════════════════════════
+
+direction       : int
+  +1 = current leg is bullish (price moving up)
+  -1 = current leg is bearish (price moving down)
+   0 = transitioning / unclear
+
+structure       : string
+  "BULLISH" = higher highs + higher lows pattern intact
+  "BEARISH" = lower highs + lower lows pattern intact
+  "NEUTRAL" = no clear pattern / alternating without follow-through
+
+last_swing_high : float
+  Price of the most recently confirmed pivot high
+
+last_swing_low  : float
+  Price of the most recently confirmed pivot low
+
+bos_signal      : string
+  "BOS_UP"   = break of structure upward (price exceeded last swing high)
+  "BOS_DOWN" = break of structure downward (price broke last swing low)
+  "NONE"     = no break of structure detected
+
+leg_bar_count   : int
+  Number of bars elapsed in the current swing leg
+  Used to assess momentum duration
+
+═══════════════════════════════════════════════════════════
+PYTHON REPLICATION LOGIC
+═══════════════════════════════════════════════════════════
+
+def detect_zigzag(df, atr_multiplier=1.5):
+    """
+    ATR-based ZigZag detection replicating KioseffTrading logic.
+    Returns swing highs, swing lows, direction, structure, BOS.
+    """
+    atr = compute_atr(df, period=14)
+    pivots = []
+    direction = 0
+    last_high = df['high'].iloc[0]
+    last_low  = df['low'].iloc[0]
+
+    for i, row in df.iterrows():
+        threshold = atr[i] * atr_multiplier
+
+        if direction >= 0:
+            if row['high'] > last_high:
+                last_high = row['high']
+            if row['low'] <= last_high - threshold:
+                pivots.append(('HIGH', last_high, i))
+                direction = -1
+                last_low = row['low']
+
+        if direction <= 0:
+            if row['low'] < last_low:
+                last_low = row['low']
+            if row['high'] >= last_low + threshold:
+                pivots.append(('LOW', last_low, i))
+                direction = 1
+                last_high = row['high']
+
+    return pivots
+
+def get_structure(pivots):
+    if len(pivots) < 4:
+        return "NEUTRAL"
+    highs = [p[1] for p in pivots if p[0] == 'HIGH'][-2:]
+    lows  = [p[1] for p in pivots if p[0] == 'LOW'][-2:]
+    if highs[1] > highs[0] and lows[1] > lows[0]:
+        return "BULLISH"
+    if highs[1] < highs[0] and lows[1] < lows[0]:
+        return "BEARISH"
+    return "NEUTRAL"
+
+def get_bos(pivots, current_high, current_low):
+    if len(pivots) < 2:
+        return "NONE"
+    last_swing_high = max(p[1] for p in pivots if p[0] == 'HIGH')
+    last_swing_low  = min(p[1] for p in pivots if p[0] == 'LOW')
+    if current_high > last_swing_high:
+        return "BOS_UP"
+    if current_low < last_swing_low:
+        return "BOS_DOWN"
+    return "NONE"
+
+═══════════════════════════════════════════════════════════
+SCORING CONTRIBUTION
+═══════════════════════════════════════════════════════════
+
+Priority : HIGHEST (Structure layer, max ±25 points)
+
+BULLISH structure + BOS_UP + ABOVE_VA  → +25
+BULLISH structure + no BOS             → +15
+Structure NEUTRAL                      → -15
+ZigZag conflicts with PAVP             → -25
+
+═══════════════════════════════════════════════════════════
+EXECUTION RULES
+═══════════════════════════════════════════════════════════
+
+- Structure NEUTRAL → automatic NO TRADE bias
+- BOS_UP required for A-grade long entries
+- BOS_DOWN required for A-grade short entries
+- leg_bar_count > 50 → exhaustion consideration
+- last_swing_low = primary stop reference for long trades
+- last_swing_high = primary stop reference for short trades

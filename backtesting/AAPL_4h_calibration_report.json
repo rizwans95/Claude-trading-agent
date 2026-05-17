@@ -1,0 +1,105 @@
+{
+  "symbol": "AAPL",
+  "timeframe": "4h",
+  "total_bars": 1452,
+  "total_signals": 610,
+  "total_trades": 50,
+  "rr_ratio": 2.0,
+  "by_grade": {
+    "A": {
+      "count": 32,
+      "wins": 9,
+      "losses": 23,
+      "win_rate": 28.1,
+      "avg_confidence": 89.0,
+      "expectancy_r": -0.156
+    },
+    "B": {
+      "count": 18,
+      "wins": 3,
+      "losses": 15,
+      "win_rate": 16.7,
+      "avg_confidence": 68.7,
+      "expectancy_r": -0.5
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    },
+    "NONE": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    }
+  },
+  "by_regime": {
+    "TRENDING_UP": {
+      "count": 46,
+      "win_rate": 21.7
+    },
+    "TRENDING_DOWN": {
+      "count": 4,
+      "win_rate": 50.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 46,
+      "win_rate": 21.7
+    },
+    "SHORT": {
+      "count": 4,
+      "win_rate": 50.0
+    }
+  },
+  "by_hour": {
+    "8": {
+      "count": 29,
+      "win_rate": 17.2
+    },
+    "12": {
+      "count": 21,
+      "win_rate": 33.3
+    }
+  },
+  "score_buckets": {
+    "75-100": {
+      "count": 32,
+      "win_rate": 28.1
+    },
+    "60-74": {
+      "count": 18,
+      "win_rate": 16.7
+    },
+    "50-59": {
+      "count": 0,
+      "win_rate": 0.0
+    }
+  },
+  "no_trade_filter_effectiveness": {
+    "engine_no_trade": 742,
+    "filter_rejected": 384,
+    "total_blocked": 1126,
+    "pct_of_total_bars": 77.5
+  },
+  "active_filters": {
+    "skip_grade_c": true,
+    "skip_breakout": true,
+    "skip_opposing_mom": true,
+    "min_conf_A": 80.0,
+    "min_conf_B": 65.0
+  },
+  "calibration_table": {
+    "A": 28.1,
+    "B": 16.7,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}

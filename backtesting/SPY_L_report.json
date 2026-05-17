@@ -1,0 +1,71 @@
+{
+  "config": "L_G_B_71214",
+  "asset": "SPY",
+  "symbol": "SPY",
+  "timeframe": "15m",
+  "total_bars": 1560,
+  "total_signals": 1379,
+  "total_trades": 7,
+  "wins": 5,
+  "win_rate": 71.4,
+  "avg_r": 0.288,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    },
+    "B": {
+      "count": 7,
+      "win_rate": 71.4,
+      "avg_r": 0.288
+    },
+    "C": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 7,
+      "win_rate": 71.4,
+      "avg_r": 0.288
+    }
+  },
+  "lvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "hvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "by_hour": {
+    "12": {
+      "count": 4,
+      "win_rate": 75.0,
+      "avg_r": 0.428
+    },
+    "14": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": 0.1
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 1379,
+    "no_trade": 1335,
+    "trades_taken": 7,
+    "filter_rate": 99.5
+  },
+  "pnl": {
+    "final": 1039.15,
+    "peak": 1039.15,
+    "max_drawdown_pct": 4.0,
+    "total_return_pct": 3.9
+  }
+}

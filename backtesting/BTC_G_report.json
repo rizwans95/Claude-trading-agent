@@ -1,0 +1,86 @@
+{
+  "config": "G_STRICT_SESSION",
+  "asset": "BTC",
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "total_bars": 10000,
+  "total_signals": 9819,
+  "total_trades": 28,
+  "wins": 21,
+  "win_rate": 75.0,
+  "avg_r": 0.035,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 14,
+      "win_rate": 71.4,
+      "avg_r": -0.102
+    },
+    "B": {
+      "count": 14,
+      "win_rate": 78.6,
+      "avg_r": 0.173
+    },
+    "C": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 19,
+      "win_rate": 78.9,
+      "avg_r": 0.133
+    },
+    "SHORT": {
+      "count": 9,
+      "win_rate": 66.7,
+      "avg_r": -0.171
+    }
+  },
+  "lvn_trades": {
+    "count": 1,
+    "win_rate": 0.0,
+    "avg_r": -1.0
+  },
+  "hvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "by_hour": {
+    "7": {
+      "count": 6,
+      "win_rate": 66.7,
+      "avg_r": -0.111
+    },
+    "12": {
+      "count": 4,
+      "win_rate": 50.0,
+      "avg_r": -0.049
+    },
+    "14": {
+      "count": 14,
+      "win_rate": 92.9,
+      "avg_r": 0.167
+    },
+    "18": {
+      "count": 4,
+      "win_rate": 50.0,
+      "avg_r": -0.122
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 9819,
+    "no_trade": 9673,
+    "trades_taken": 28,
+    "filter_rate": 99.7
+  },
+  "pnl": {
+    "final": 1017.99,
+    "peak": 1019.67,
+    "max_drawdown_pct": 5.7,
+    "total_return_pct": 1.8
+  }
+}

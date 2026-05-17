@@ -1,0 +1,162 @@
+{
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "total_bars": 10000,
+  "total_signals": 9541,
+  "total_trades": 751,
+  "wins": 370,
+  "win_rate": 49.3,
+  "avg_r_multiple": -0.106,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 187,
+      "wins": 83,
+      "win_rate": 44.4,
+      "avg_r": -0.105
+    },
+    "B": {
+      "count": 564,
+      "wins": 287,
+      "win_rate": 50.9,
+      "avg_r": -0.106
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 751,
+      "win_rate": 49.3
+    }
+  },
+  "by_level_type": {
+    "KEY_LEVEL": {
+      "count": 731,
+      "win_rate": 49.1
+    },
+    "LVN": {
+      "count": 20,
+      "win_rate": 55.0
+    }
+  },
+  "by_cvd_signal": {
+    "BULLISH_ENTRY": {
+      "count": 751,
+      "win_rate": 49.3
+    }
+  },
+  "lvn_trades": {
+    "count": 20,
+    "win_rate": 55.0
+  },
+  "by_hour": {
+    "0": {
+      "count": 31,
+      "win_rate": 54.8
+    },
+    "1": {
+      "count": 25,
+      "win_rate": 36.0
+    },
+    "2": {
+      "count": 30,
+      "win_rate": 46.7
+    },
+    "3": {
+      "count": 30,
+      "win_rate": 66.7
+    },
+    "4": {
+      "count": 27,
+      "win_rate": 55.6
+    },
+    "5": {
+      "count": 37,
+      "win_rate": 37.8
+    },
+    "6": {
+      "count": 36,
+      "win_rate": 52.8
+    },
+    "7": {
+      "count": 34,
+      "win_rate": 52.9
+    },
+    "8": {
+      "count": 35,
+      "win_rate": 65.7
+    },
+    "9": {
+      "count": 31,
+      "win_rate": 48.4
+    },
+    "10": {
+      "count": 35,
+      "win_rate": 54.3
+    },
+    "11": {
+      "count": 32,
+      "win_rate": 43.8
+    },
+    "12": {
+      "count": 31,
+      "win_rate": 45.2
+    },
+    "13": {
+      "count": 40,
+      "win_rate": 52.5
+    },
+    "14": {
+      "count": 37,
+      "win_rate": 48.6
+    },
+    "15": {
+      "count": 35,
+      "win_rate": 51.4
+    },
+    "16": {
+      "count": 27,
+      "win_rate": 51.9
+    },
+    "17": {
+      "count": 36,
+      "win_rate": 30.6
+    },
+    "18": {
+      "count": 32,
+      "win_rate": 34.4
+    },
+    "19": {
+      "count": 26,
+      "win_rate": 50.0
+    },
+    "20": {
+      "count": 33,
+      "win_rate": 39.4
+    },
+    "21": {
+      "count": 25,
+      "win_rate": 56.0
+    },
+    "22": {
+      "count": 19,
+      "win_rate": 63.2
+    },
+    "23": {
+      "count": 27,
+      "win_rate": 51.9
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 9541,
+    "no_trade": 8790,
+    "exhaustion_blocks": 0,
+    "trades_taken": 751,
+    "filter_rate_pct": 92.1
+  }
+}

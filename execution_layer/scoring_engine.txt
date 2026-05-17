@@ -1,0 +1,169 @@
+SCORING ENGINE V2
+═══════════════════════════════════════════════════════════
+
+Every signal snapshot is scored 0–100.
+Base score = 50. Adjustments applied per layer below.
+
+═══════════════════════════════════════════════════════════
+1. STRUCTURE LAYER — ZigZag + PAVP  (range: -25 to +25)
+═══════════════════════════════════════════════════════════
+
+BULLISH SETUP scoring:
+  zigzag.structure = BULLISH
+  + zigzag.bos_signal = BOS_UP        → +25
+  + pavp.value_area_position = ABOVE_VA → confirmed location
+  + pavp only, no BOS                 → +15
+  + zigzag only, PAVP neutral         → +5
+  + structure NEUTRAL                 → -15
+  + zigzag BEARISH vs PAVP ABOVE_VA   → -15 (conflict)
+  + zigzag BULLISH vs PAVP BELOW_VA   → -15 (conflict)
+  + both opposing primary bias        → -25
+
+BEARISH SETUP scoring: mirror above for short direction.
+
+═══════════════════════════════════════════════════════════
+2. LOCATION LAYER — PAVP  (range: -15 to +10)
+═══════════════════════════════════════════════════════════
+
+value_area_position:
+  ABOVE_VA (long) or BELOW_VA (short)  → +5 to +10
+    + near VAH/VAL boundary (<0.2%)    → +10
+    + accepted outside VA (>0.5%)      → +7
+    + just outside VA edge             → +5
+  INSIDE_VA                            → -10
+
+poc_distance_pct modifier:
+  < 0.1% (at POC)                      → -3 (magnet risk)
+  > 1.5% (clear of POC)                → 0
+
+value_area_width_pct modifier:
+  < 30% (narrow, compressed)           → 0 (note compression)
+  > 70% (wide, extended)               → -2
+
+═══════════════════════════════════════════════════════════
+3. MOMENTUM LAYER — Combined Trend Speed + MACD vote  (range: -15 to +15)
+═══════════════════════════════════════════════════════════
+
+V3 CHANGE: Momentum double-counting fix.
+MACD and Trend Speed both measure price rate-of-change from
+the same close series. Previously each scored up to +10
+independently (total +20 possible for one market dimension).
+Now they form a single combined momentum vote (max +15).
+
+STEP 1 — Trend Speed base vote (max +10 / min -8):
+
+  direction aligned + regime EXPANSION          → +10
+  direction aligned + regime NORMAL             → +6
+  direction aligned + regime CONSOLIDATION      → +2
+  direction aligned + regime EXHAUSTION         → -5
+  FLAT                                          → 0
+  opposing direction                            → -8
+
+  wave_analysis sub-modifiers (max ±2):
+    current_ratio_avg > 1.2 (accelerating)      → +2
+    current_ratio_avg < 0.4 (exhaustion)        → -2
+
+  price_vs_ema CROSSING                         → -2
+  wave dominance opposing                       → -2
+
+STEP 2 — MACD confirmation modifier (max +5 / min -7):
+  (Confirms or disputes Trend Speed. Does NOT score independently.)
+
+  BULLISH_ACCELERATING + zero ABOVE (aligned)   → +5
+  BULLISH_ACCELERATING + zero BELOW             → +3
+  BULLISH_DECELERATING + zero ABOVE             → +1
+  BULLISH_DECELERATING + zero BELOW             → 0
+  opposing weakening state                      → -3
+  full opposing acceleration + zero below       → -7
+  full opposing acceleration + zero above       → -4
+
+  fresh CROSS aligned                           → +2 additional
+  opposing CROSS                                → -2 additional
+
+COMBINED MOMENTUM RANGE: -15 to +15
+(vs V2 range of -15 to +20 — inflation reduced)
+
+═══════════════════════════════════════════════════════════
+4. ORDER FLOW LAYER — CVD IQ  (range: -20 to +15)
+═══════════════════════════════════════════════════════════
+
+cvd_direction (max +10 / min -5):
+  BUYING confirms long bias                     → +10
+  SELLING confirms short bias                   → +10
+  NEUTRAL                                       → 0
+  opposing direction                            → -5
+
+divergence (scale-weighted, cumulative):
+  divergence.large  opposing                    → -15
+  divergence.medium opposing                    → -10
+  divergence.small  opposing                    → -5
+  (only highest active scale is applied)
+
+absorption:
+  BUY_ABSORPTION  (confirms hidden buyers)      → +5
+  SELL_ABSORPTION (confirms hidden sellers)     → +5
+  NONE                                          → 0
+
+cost.cost_state:
+  VERY_HIGH + direction aligned                 → +5
+  HIGH      + direction aligned                 → +2
+  NORMAL                                        → 0
+  LOW                                           → -2
+  VERY_LOW                                      → -5
+
+delta_implied.move_ratio:
+  > 1.5  (overextended)                         → -5
+  0.5–1.5 (normal range)                        → 0
+  < 0.5  (suppressed, uncertain)                → -3
+
+ma.ma_bias aligned with trade direction:
+  ABOVE (long) or BELOW (short)                 → +2
+  CROSSING                                      → 0
+  opposing                                      → -2
+
+aggression.imbalance_ratio:
+  > 1.5 aligned                                 → +1
+  < 0.67 opposing                               → -1
+
+═══════════════════════════════════════════════════════════
+5. VOLATILITY LAYER — ATR  (modifier only, range: -10 to 0)
+═══════════════════════════════════════════════════════════
+
+ATR is NEVER directional. Applied as final modifier only.
+
+volatility_state + context:
+  HIGH + expansion = true                       → 0  (valid environment)
+  HIGH + expansion = false                      → -3 (spike, avoid late entry)
+  NORMAL                                        → 0
+  LOW  + compression = true                     → 0  (setup forming)
+  LOW  + compression = false                    → -5 (flat, avoid breakouts)
+
+percentile_rank modifiers:
+  > 90 (extreme)                                → -5 additional
+  < 10 (dead market)                            → -5 additional
+  10–90                                         → 0
+
+compression flag:
+  true (ATR contracting)                        → breakout readiness note only
+
+expansion flag:
+  true (ATR expanding)                          → momentum environment note
+
+═══════════════════════════════════════════════════════════
+SCORE CLAMPING AND FINAL DECISION
+═══════════════════════════════════════════════════════════
+
+  score = clamp(base + all_adjustments, 0, 100)
+
+  ≥ 75  → STRONG TRADE (A)
+  60–74 → VALID TRADE  (B)
+  50–59 → WEAK TRADE   (C)
+  < 50  → NO TRADE
+
+═══════════════════════════════════════════════════════════
+REGIME CONFIDENCE PENALTY (applied before scoring)
+═══════════════════════════════════════════════════════════
+
+If regime = UNCERTAIN:
+  Apply flat -10 penalty to base score (base = 40)
+  Require score ≥ 80 to produce any trade signal

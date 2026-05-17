@@ -1,0 +1,122 @@
+{
+  "signal_id": "",
+  "timestamp": "",
+  "symbol": "",
+  "timeframe": "",
+
+  "market_snapshot": {
+    "price": {
+      "open":  0.0,
+      "high":  0.0,
+      "low":   0.0,
+      "close": 0.0
+    },
+    "volume": 0.0
+  },
+
+  "indicator_snapshot": {
+
+    "pavp": {
+      "poc":                0.0,
+      "vah":                0.0,
+      "val":                0.0,
+      "poc_distance_pct":   0.0,
+      "value_area_position": "ABOVE_VA | BELOW_VA | INSIDE_VA",
+      "value_area_width_pct": 0.0,
+      "profile_length_bars":  0,
+      "traded_volume":        0.0
+    },
+
+    "zigzag": {
+      "direction":         1,
+      "last_swing_high":   0.0,
+      "last_swing_low":    0.0,
+      "bos_signal":        "BOS_UP | BOS_DOWN | NONE",
+      "structure":         "BULLISH | BEARISH | NEUTRAL",
+      "leg_bar_count":     0
+    },
+
+    "macd": {
+      "macd_line":           0.0,
+      "signal_line":         0.0,
+      "histogram":           0.0,
+      "histogram_state":     "BULLISH_ACCELERATING | BULLISH_DECELERATING | BEARISH_RECOVERING | BEARISH_ACCELERATING",
+      "histogram_direction": "RISING | FALLING",
+      "zero_line_position":  "ABOVE | BELOW",
+      "signal_cross":        "BULLISH_CROSS | BEARISH_CROSS | NONE"
+    },
+
+    "trend_speed": {
+      "speed_raw":        0.0,
+      "speed_normalized": 0.0,
+      "trendspeed_hma":   0.0,
+      "direction":        "BULLISH | BEARISH | FLAT",
+      "regime":           "EXPANSION | EXHAUSTION | CONSOLIDATION | NORMAL",
+      "dyn_ema":          0.0,
+      "price_vs_ema":     "ABOVE | BELOW | CROSSING",
+      "wave_analysis": {
+        "current_ratio_avg": 0.0,
+        "current_ratio_max": 0.0,
+        "dominance":         "BULLISH | BEARISH | NEUTRAL",
+        "dominance_factor":  0.0
+      }
+    },
+
+    "cvd": {
+      "current_cvd":  0.0,
+      "cvd_direction": "BUYING | SELLING | NEUTRAL",
+      "divergence": {
+        "small":  "BULLISH | BEARISH | NONE",
+        "medium": "BULLISH | BEARISH | NONE",
+        "large":  "BULLISH | BEARISH | NONE"
+      },
+      "aggression": {
+        "buy_pct":         0.0,
+        "sell_pct":        0.0,
+        "net_delta":       0.0,
+        "imbalance_ratio": 0.0,
+        "dominant_side":   "BUY | SELL | BALANCED"
+      },
+      "cost": {
+        "cost_per_tick": 0.0,
+        "cost_state":    "VERY_HIGH | HIGH | NORMAL | LOW | VERY_LOW"
+      },
+      "absorption": {
+        "type": "BUY_ABSORPTION | SELL_ABSORPTION | NONE"
+      },
+      "delta_implied": {
+        "expected_close": 0.0,
+        "move_ratio":     0.0
+      },
+      "ma": {
+        "fast":     0.0,
+        "slow":     0.0,
+        "ma_bias":  "ABOVE | BELOW | CROSSING"
+      }
+    },
+
+    "atr": {
+      "atr_value":        0.0,
+      "atr_pct_of_price": 0.0,
+      "percentile_rank":  0.0,
+      "volatility_state": "LOW | NORMAL | HIGH",
+      "compression":      false,
+      "expansion":        false
+    }
+
+  },
+
+  "derived_context": {
+    "regime":          "",
+    "structure_bias":  "",
+    "momentum_bias":   "",
+    "order_flow_bias": "",
+    "volatility_bias": ""
+  },
+
+  "execution_input": {
+    "allow_long":    true,
+    "allow_short":   true,
+    "force_no_trade": false
+  }
+}

@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Agent V2 — Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+:root {
+  --bg:        #080b10;
+  --surface:   #0d1117;
+  --panel:     #111820;
+  --border:    #1e2a38;
+  --accent:    #00d4ff;
+  --green:     #00ff88;
+  --red:       #ff3d5a;
+  --gold:      #f5a623;
+  --muted:     #4a6080;
+  --text:      #c8d8e8;
+  --text-dim:  #6888a8;
+  --font-mono: 'Space Mono', monospace;
+  --font-ui:   'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Grid noise overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 10;
+}
+
+.logo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.logo span { color: var(--text-dim); }
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+  50%       { opacity: 0.6; box-shadow: 0 0 0 6px rgba(0,255,136,0); }
+}
+
+/* ── Main layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  min-height: calc(100vh - 65px);
+  position: relative; z-index: 1;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  background: var(--surface);
+}
+
+.sidebar-section h3 {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Strategy pills */
+.strategy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.strat-btn {
+  padding: 10px 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.strat-btn:hover { border-color: var(--accent); }
+
+.strat-btn.active {
+  border-color: var(--accent);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.strat-btn .strat-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.strat-btn .strat-asset {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.strat-btn .strat-wr {
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.strat-btn.active .strat-wr { color: var(--green); }
+
+/* ALL button */
+.all-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  transition: all 0.2s;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.all-btn:hover, .all-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245,166,35,0.08);
+}
+
+/* Select dropdowns */
+.select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.select-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+select {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+}
+
+select:focus { border-color: var(--accent); }
+
+/* ── Main content ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Top stat bar ── */
+.stat-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-cell {
+  padding: 20px 24px;
+  border-right: 1px solid var(--border);
+  transition: background 0.3s;
+}
+
+.stat-cell:last-child { border-right: none; }
+
+.stat-cell:hover { background: rgba(255,255,255,0.02); }
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  transition: all 0.4s;
+}
+
+.stat-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ── Chart area ── */
+.chart-area {
+  padding: 28px 32px;
+  flex: 1;
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chart-subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+canvas {
+  width: 100% !important;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+/* ── Bottom grid ── */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--border);
+}
+
+.bottom-panel {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+}
+
+.bottom-panel:last-child { border-right: none; }
+
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* MM Table */
+.mm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.mm-table tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mm-table tr:hover { background: rgba(255,255,255,0.03); }
+.mm-table tr.active-mm { background: rgba(0,212,255,0.06); }
+
+.mm-table td {
+  padding: 7px 4px;
+  color: var(--text-dim);
+}
+
+.mm-table td:first-child { color: var(--text); }
+.mm-table td:last-child { text-align: right; }
+
+/* Leverage table */
+.lev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.lev-table tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lev-table tr:hover { background: rgba(255,255,255,0.03); }
+.lev-table tr.active-lev { background: rgba(0,212,255,0.06); }
+
+.lev-table td {
+  padding: 7px 4px;
+  color: var(--text-dim);
+}
+
+.lev-table td:first-child { color: var(--text); font-weight: 700; }
+
+/* Hour heatmap */
+.hour-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.hour-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  cursor: default;
+  transition: transform 0.15s;
+}
+
+.hour-cell:hover { transform: scale(1.1); }
+
+.hour-num { color: rgba(255,255,255,0.5); font-size: 8px; }
+.hour-wr  { font-weight: 700; font-size: 10px; margin-top: 1px; }
+
+/* Risk badge */
+.risk-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.risk-safe     { background: rgba(0,255,136,0.15); color: var(--green); }
+.risk-caution  { background: rgba(245,166,35,0.15); color: var(--gold); }
+.risk-danger   { background: rgba(255,61,90,0.15);  color: var(--red); }
+
+/* Colors */
+.green  { color: var(--green); }
+.red    { color: var(--red); }
+.gold   { color: var(--gold); }
+.accent { color: var(--accent); }
+
+/* ── Signal panel overlay ── */
+.signal-overlay {
+  position: fixed;
+  top: 80px; right: 24px;
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 100;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.signal-header {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.signal-direction {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.signal-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.signal-meta strong { color: var(--text); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text);
+  pointer-events: none;
+  z-index: 200;
+  display: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">Trading Agent <span>/ V2</span></div>
+  <div style="display:flex;gap:24px;align-items:center">
+    <div id="currentTime" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim)"></div>
+    <div class="header-status">
+      <div class="pulse"></div>
+      <span>SYSTEM ACTIVE</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <h3>Strategy</h3>
+      <button class="all-btn" id="btn-all" onclick="selectStrategy('ALL')">View All Strategies</button>
+      <div class="strategy-grid">
+        <div class="strat-btn active" id="btn-BTC_G" onclick="selectStrategy('BTC_G')">
+          <div class="strat-name">BTC-G</div>
+          <div class="strat-asset">BTCUSDT 15m</div>
+          <div class="strat-wr">82.1%</div>
+        </div>
+        <div class="strat-btn" id="btn-BTC_L" onclick="selectStrategy('BTC_L')">
+          <div class="strat-name">BTC-L</div>
+          <div class="strat-asset">BTCUSDT 15m</div>
+          <div class="strat-wr">92.3%</div>
+        </div>
+        <div class="strat-btn" id="btn-ETH_G" onclick="selectStrategy('ETH_G')">
+          <div class="strat-name">ETH-G</div>
+          <div class="strat-asset">ETHUSDT 15m</div>
+          <div class="strat-wr">68.0%</div>
+        </div>
+        <div class="strat-btn" id="btn-SPY_L" onclick="selectStrategy('SPY_L')">
+          <div class="strat-name">SPY-L</div>
+          <div class="strat-asset">SPY 1h</div>
+          <div class="strat-wr">85.7%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Money Management</h3>
+      <div class="select-group">
+        <div class="select-row">
+          <span class="select-label">Config</span>
+          <select id="mmSelect" onchange="updateMM()">
+            <option value="MM1">MM1 — Fixed 1%</option>
+            <option value="MM2">MM2 — Fixed 2%</option>
+            <option value="MM3" selected>MM3 — Fixed 3%</option>
+            <option value="MM4">MM4 — G=2% / L=1%</option>
+            <option value="MM5">MM5 — DD Throttle</option>
+            <option value="MM6">MM6 — After-Loss Reduce</option>
+            <option value="MM7">MM7 — After-Win Scale</option>
+            <option value="MM8">MM8 — Prop Firm Safe</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Leverage</h3>
+      <div class="select-group">
+        <div class="select-row">
+          <span class="select-label">Level</span>
+          <select id="levSelect" onchange="updateLeverage()">
+            <option value="1">1x — No Leverage</option>
+            <option value="2">2x</option>
+            <option value="5">5x</option>
+            <option value="10" selected>10x</option>
+            <option value="20">20x</option>
+            <option value="50">50x</option>
+            <option value="100">100x</option>
+            <option value="250">250x</option>
+            <option value="500">500x</option>
+          </select>
+        </div>
+      </div>
+      <div id="levWarning" style="margin-top:10px;font-family:var(--font-mono);font-size:9px;color:var(--red);line-height:1.5;display:none"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Session Hours (UTC)</h3>
+      <div id="sessionHours" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);line-height:1.8"></div>
+    </div>
+
+    <div style="margin-top:auto">
+      <button onclick="fetchLiveSignal()" style="width:100%;padding:12px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:var(--font-mono);font-size:11px;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;transition:all 0.2s" onmouseover="this.style.background='rgba(0,212,255,0.2)'" onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+        Refresh Signal
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Stat bar -->
+    <div class="stat-bar">
+      <div class="stat-cell">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value green" id="statWR">82.1%</div>
+        <div class="stat-sub" id="statWRSub">28 trades</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Return</div>
+        <div class="stat-value green" id="statRet">+15.0%</div>
+        <div class="stat-sub" id="statRetSub">from $1,000</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Final Capital</div>
+        <div class="stat-value accent" id="statFinal">$1,150</div>
+        <div class="stat-sub" id="statFinalSub">at 3% risk</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Max Drawdown</div>
+        <div class="stat-value gold" id="statDD">4.1%</div>
+        <div class="stat-sub">peak to trough</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Avg R / Trade</div>
+        <div class="stat-value" id="statAvgR">+0.172</div>
+        <div class="stat-sub">risk-reward ratio</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-area">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="chartTitle">BTC-G Strategy — Equity Curve</div>
+          <div class="chart-subtitle" id="chartSub">BTCUSDT 15m · Hours 7, 12, 14, 18 UTC · Grades A+B</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--accent)"></div>
+            <span>Equity</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--green)"></div>
+            <span>Win</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--red)"></div>
+            <span>Loss / Liq</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="equityChart" height="240"></canvas>
+    </div>
+
+    <!-- Bottom panels -->
+    <div class="bottom-grid">
+
+      <!-- MM breakdown -->
+      <div class="bottom-panel">
+        <div class="panel-title">MM Config Comparison</div>
+        <table class="mm-table" id="mmTable">
+          <tr><td colspan="3" style="color:var(--text-dim);padding:12px 0">Loading...</td></tr>
+        </table>
+      </div>
+
+      <!-- Leverage breakdown -->
+      <div class="bottom-panel">
+        <div class="panel-title">Leverage Scenarios</div>
+        <table class="lev-table" id="levTable">
+          <tr><td colspan="3" style="color:var(--text-dim);padding:12px 0">Loading...</td></tr>
+        </table>
+      </div>
+
+      <!-- Hour heatmap -->
+      <div class="bottom-panel">
+        <div class="panel-title">Hour Performance (UTC)</div>
+        <div class="hour-grid" id="hourGrid"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STRATEGY DATA
+// ══════════════════════════════════════════════════════════════
+
+const STRATEGIES = {
+  BTC_G: {
+    label:    'BTC-G',
+    asset:    'BTCUSDT 15m',
+    hours:    '7, 12, 14, 18 UTC',
+    grades:   'A + B',
+    mode:     'G',
+    wr:       82.1,
+    trades:   28,
+    avgR:     0.172,
+    breakeven: 35.7,
+    mm: {
+      MM1: { ret: 4.9,  dd: 1.4, final: 1048.69 },
+      MM2: { ret: 9.9,  dd: 2.7, final: 1098.62 },
+      MM3: { ret: 15.0, dd: 4.1, final: 1149.76 },
+      MM4: { ret: 9.9,  dd: 2.7, final: 1098.62 },
+      MM5: { ret: 9.9,  dd: 2.7, final: 1098.62 },
+      MM6: { ret: 7.5,  dd: 2.7, final: 1075.09 },
+      MM7: { ret: 13.9, dd: 3.5, final: 1138.96 },
+      MM8: { ret: 4.9,  dd: 1.4, final: 1048.69, halted: false },
+    },
+    lev: {
+      1:   { ret: 9.9,          dd: 2.7,  liqs: 3,  liqRate: 10.7, final: 1098.62 },
+      2:   { ret: 28.9,         dd: 3.3,  liqs: 4,  liqRate: 14.3, final: 1289.18 },
+      5:   { ret: 115.8,        dd: 4.0,  liqs: 7,  liqRate: 25.0, final: 2158.16 },
+      10:  { ret: 407.5,        dd: 4.0,  liqs: 7,  liqRate: 25.0, final: 5075.23 },
+      20:  { ret: 2343.1,       dd: 4.0,  liqs: 7,  liqRate: 25.0, final: 24431.06 },
+      50:  { ret: 122650.9,     dd: 4.0,  liqs: 7,  liqRate: 25.0, final: 1227508.78 },
+      100: { ret: 17344119.9,   dd: 4.0,  liqs: 9,  liqRate: 32.1, final: 173442199 },
+      250: { ret: 254923864736, dd: 4.0,  liqs: 9,  liqRate: 32.1, final: 2549238648367 },
+      500: { ret: 999999999999, dd: 4.0,  liqs: 9,  liqRate: 32.1, final: 999999999999 },
+    },
+    hours_wr: {
+      7:  { wr: 75.0, n: 4 },
+      12: { wr: 100.0, n: 7 },
+      14: { wr: 92.9, n: 14 },
+      18: { wr: 80.0, n: 5 },
+    },
+    equity: [1000, 1020, 1008, 1030, 1055, 1040, 1068, 1090, 1075, 1100, 1088, 1115, 1130, 1120, 1149],
+    outcomes: ['W','W','L','W','W','L','W','W','L','W','L','W','W','L','W'],
+  },
+
+  BTC_L: {
+    label:    'BTC-L',
+    asset:    'BTCUSDT 15m',
+    hours:    '7, 12, 14 UTC',
+    grades:   'B only',
+    mode:     'L',
+    wr:       92.3,
+    trades:   13,
+    avgR:     0.334,
+    breakeven: 35.7,
+    mm: {
+      MM1: { ret: 4.4,  dd: 0.3, final: 1044.15 },
+      MM2: { ret: 9.0,  dd: 0.7, final: 1089.88 },
+      MM3: { ret: 13.7, dd: 1.0, final: 1137.24 },
+      MM4: { ret: 4.4,  dd: 0.3, final: 1044.15 },
+      MM5: { ret: 9.0,  dd: 0.7, final: 1089.88 },
+      MM6: { ret: 8.8,  dd: 0.7, final: 1087.67 },
+      MM7: { ret: 13.3, dd: 0.7, final: 1132.57 },
+      MM8: { ret: 4.4,  dd: 0.3, final: 1044.15, halted: false },
+    },
+    lev: {
+      1:   { ret: 9.0,      dd: 0.7, liqs: 0, liqRate: 0.0,  final: 1089.88 },
+      2:   { ret: 18.6,     dd: 1.3, liqs: 0, liqRate: 0.0,  final: 1186.27 },
+      5:   { ret: 53.9,     dd: 2.0, liqs: 1, liqRate: 7.7,  final: 1538.53 },
+      10:  { ret: 134.9,    dd: 2.0, liqs: 1, liqRate: 7.7,  final: 2348.74 },
+      20:  { ret: 410.7,    dd: 2.0, liqs: 1, liqRate: 7.7,  final: 5107.42 },
+      50:  { ret: 3437.3,   dd: 2.0, liqs: 1, liqRate: 7.7,  final: 35372.59 },
+      100: { ret: 41254.5,  dd: 2.0, liqs: 3, liqRate: 23.1, final: 413544.94 },
+      250: { ret: 4898958,  dd: 2.0, liqs: 3, liqRate: 23.1, final: 48990580 },
+      500: { ret: 522554612,dd: 2.0, liqs: 3, liqRate: 23.1, final: 5225547125 },
+    },
+    hours_wr: {
+      7:  { wr: 100.0, n: 3 },
+      12: { wr: 100.0, n: 4 },
+      14: { wr: 80.0,  n: 5 },
+    },
+    equity: [1000, 1033, 1067, 1055, 1090, 1126, 1115, 1150, 1137, 1140, 1155, 1148, 1137],
+    outcomes: ['W','W','W','L','W','W','L','W','L','W','W','L','W'],
+  },
+
+  ETH_G: {
+    label:    'ETH-G',
+    asset:    'ETHUSDT 15m',
+    hours:    '7, 12, 14, 18 UTC',
+    grades:   'A + B',
+    mode:     'G',
+    wr:       68.0,
+    trades:   25,
+    avgR:     0.281,
+    breakeven: 35.7,
+    mm: {
+      MM1: { ret: -2.3, dd: 3.8, final: 976.80 },
+      MM2: { ret: -4.7, dd: 7.4, final: 953.21 },
+      MM3: { ret: -7.1, dd: 11.0, final: 929.29 },
+      MM4: { ret: -4.7, dd: 7.4, final: 953.21 },
+      MM5: { ret: -4.1, dd: 5.5, final: 958.53 },
+      MM6: { ret: -2.5, dd: 5.0, final: 975.33 },
+      MM7: { ret: -5.4, dd: 9.6, final: 946.16 },
+      MM8: { ret: -2.3, dd: 3.8, final: 976.80, halted: false },
+    },
+    lev: {
+      1:   { ret: -4.7,   dd: 7.4,  liqs: 6,  liqRate: 24.0, final: 953.21 },
+      2:   { ret: 3.0,    dd: 8.5,  liqs: 7,  liqRate: 28.0, final: 1029.87 },
+      5:   { ret: 34.3,   dd: 9.5,  liqs: 9,  liqRate: 36.0, final: 1343.11 },
+      10:  { ret: 116.6,  dd: 9.6,  liqs: 11, liqRate: 44.0, final: 2165.71 },
+      20:  { ret: 434.4,  dd: 9.6,  liqs: 11, liqRate: 44.0, final: 5344.40 },
+      50:  { ret: 5293.3, dd: 9.6,  liqs: 11, liqRate: 44.0, final: 53932.79 },
+      100: { ret: 109430, dd: 9.6,  liqs: 12, liqRate: 48.0, final: 1095304 },
+      250: { ret: 46255086,dd: 9.6, liqs: 12, liqRate: 48.0, final: 462551862 },
+      500: { ret: 999999999,dd: 9.6,liqs: 12, liqRate: 48.0, final: 999999999 },
+    },
+    hours_wr: {
+      7:  { wr: 66.7, n: 3 },
+      12: { wr: 60.0, n: 5 },
+      14: { wr: 66.7, n: 12 },
+      18: { wr: 80.0, n: 5 },
+    },
+    equity: [1000, 1020, 1005, 1025, 1010, 1030, 1015, 1040, 1025, 1050, 1035, 1060, 980, 1000, 975],
+    outcomes: ['W','L','W','L','W','L','W','L','W','L','W','L','L','L','L'],
+  },
+
+  SPY_L: {
+    label:    'SPY-L',
+    asset:    'SPY 1h',
+    hours:    '13, 14 UTC',
+    grades:   'B only',
+    mode:     'L',
+    wr:       85.7,
+    trades:   7,
+    avgR:     0.220,
+    breakeven: 35.7,
+    mm: {
+      MM1: { ret: 3.1,  dd: 2.1, final: 1031 },
+      MM2: { ret: 3.9,  dd: 4.0, final: 1039 },
+      MM3: { ret: 3.9,  dd: 4.0, final: 1039 },
+      MM4: { ret: 3.1,  dd: 2.1, final: 1031 },
+      MM5: { ret: 3.9,  dd: 4.0, final: 1039 },
+      MM6: { ret: 3.5,  dd: 2.1, final: 1035 },
+      MM7: { ret: 4.2,  dd: 4.0, final: 1042 },
+      MM8: { ret: 3.1,  dd: 2.1, final: 1031, halted: false },
+    },
+    lev: {
+      1:   { ret: 3.9,    dd: 4.0, liqs: 0, liqRate: 0.0, final: 1039 },
+      2:   { ret: 7.8,    dd: 4.0, liqs: 0, liqRate: 0.0, final: 1078 },
+      5:   { ret: 19.5,   dd: 4.0, liqs: 0, liqRate: 0.0, final: 1195 },
+      10:  { ret: 39.0,   dd: 4.0, liqs: 1, liqRate: 14.3, final: 1390 },
+      20:  { ret: 78.0,   dd: 4.0, liqs: 1, liqRate: 14.3, final: 1780 },
+      50:  { ret: 195.0,  dd: 4.0, liqs: 2, liqRate: 28.6, final: 2950 },
+      100: { ret: 390.0,  dd: 4.0, liqs: 2, liqRate: 28.6, final: 4900 },
+      250: { ret: 975.0,  dd: 4.0, liqs: 3, liqRate: 42.9, final: 10750 },
+      500: { ret: 1950.0, dd: 4.0, liqs: 3, liqRate: 42.9, final: 20500 },
+    },
+    hours_wr: {
+      13: { wr: 100.0, n: 4 },
+      14: { wr: 66.7,  n: 3 },
+    },
+    equity: [1000, 1022, 1045, 1030, 1055, 1042, 1065, 1031],
+    outcomes: ['W','W','L','W','L','W','W'],
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+
+let state = {
+  strategy: 'BTC_G',
+  mm:       'MM3',
+  leverage: 10,
+};
+
+let equityChart = null;
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateClock();
+  setInterval(updateClock, 1000);
+  render();
+  // Try to fetch live signal on load
+  setTimeout(() => fetchLiveSignal().catch(() => {}), 500);
+  startAutoRefresh();
+});
+
+function updateClock() {
+  const now = new Date();
+  const utc = now.toUTCString().replace('GMT', 'UTC');
+  document.getElementById('currentTime').textContent = utc.slice(5, 25);
+}
+
+// ══════════════════════════════════════════════════════════════
+// STRATEGY SELECTION
+// ══════════════════════════════════════════════════════════════
+
+function selectStrategy(key) {
+  // Update button states
+  document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-all').classList.remove('active');
+
+  if (key === 'ALL') {
+    document.getElementById('btn-all').classList.add('active');
+    state.strategy = 'ALL';
+  } else {
+    const btn = document.getElementById('btn-' + key);
+    if (btn) btn.classList.add('active');
+    state.strategy = key;
+  }
+  render();
+}
+
+function updateMM() {
+  state.mm = document.getElementById('mmSelect').value;
+  render();
+}
+
+function updateLeverage() {
+  state.leverage = parseInt(document.getElementById('levSelect').value);
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+
+function render() {
+  if (state.strategy === 'ALL') {
+    renderAll();
+  } else {
+    renderSingle(state.strategy);
+  }
+}
+
+function renderSingle(key) {
+  const s   = STRATEGIES[key];
+  const mm  = s.mm[state.mm] || {};
+  const lev = s.lev[state.leverage] || {};
+
+  // Stats
+  setStatWR(s.wr, s.trades, s.breakeven);
+  setStatRet(mm.ret || 0, state.mm);
+  setStatFinal(mm.final || 1000, state.mm);
+  setStatDD(mm.dd || 0);
+  setStatAvgR(s.avgR);
+
+  // Chart title
+  document.getElementById('chartTitle').textContent =
+    `${s.label} Strategy — Equity Curve`;
+  document.getElementById('chartSub').textContent =
+    `${s.asset} · Hours ${s.hours} · Grades ${s.grades}`;
+
+  // Session hours
+  renderSessionHours(key);
+
+  // Equity curve
+  renderEquityChart([{
+    label: s.label,
+    equity: s.equity,
+    outcomes: s.outcomes,
+    color: '#00d4ff'
+  }]);
+
+  // Tables
+  renderMMTable(key);
+  renderLevTable(key);
+  renderHourGrid(key);
+
+  // Leverage warning
+  renderLevWarning(lev);
+}
+
+function renderAll() {
+  // Aggregate stats
+  const keys     = ['BTC_G','BTC_L','ETH_G','SPY_L'];
+  const totalTrades = keys.reduce((a,k) => a + STRATEGIES[k].trades, 0);
+  const avgWR    = keys.reduce((a,k) => a + STRATEGIES[k].wr, 0) / keys.length;
+  const avgR     = keys.reduce((a,k) => a + STRATEGIES[k].avgR, 0) / keys.length;
+  const totalRet = keys.reduce((a,k) => a + (STRATEGIES[k].mm[state.mm]?.ret||0), 0) / keys.length;
+  const maxDD    = Math.max(...keys.map(k => STRATEGIES[k].mm[state.mm]?.dd||0));
+  const avgFinal = keys.reduce((a,k) => a + (STRATEGIES[k].mm[state.mm]?.final||1000), 0) / keys.length;
+
+  setStatWR(avgWR, totalTrades, 35.7);
+  setStatRet(totalRet, state.mm);
+  setStatFinal(avgFinal, state.mm);
+  setStatDD(maxDD);
+  setStatAvgR(avgR);
+
+  document.getElementById('chartTitle').textContent = 'All Strategies — Combined View';
+  document.getElementById('chartSub').textContent =
+    `BTC-G · BTC-L · ETH-G · SPY-L`;
+
+  document.getElementById('sessionHours').innerHTML =
+    'BTC/ETH: 7, 12, 14, 18 UTC<br>SPY: 13, 14 UTC';
+
+  const colors = ['#00d4ff','#00ff88','#f5a623','#ff3d5a'];
+  renderEquityChart(keys.map((k,i) => ({
+    label:    STRATEGIES[k].label,
+    equity:   STRATEGIES[k].equity,
+    outcomes: STRATEGIES[k].outcomes,
+    color:    colors[i],
+  })));
+
+  // Summary MM table
+  renderMMTableAll();
+  renderLevTableAll();
+
+  const allHours = {};
+  keys.forEach(k => {
+    Object.entries(STRATEGIES[k].hours_wr).forEach(([h,d]) => {
+      if (!allHours[h]) allHours[h] = { wr: 0, n: 0, count: 0 };
+      allHours[h].wr += d.wr;
+      allHours[h].n  += d.n;
+      allHours[h].count++;
+    });
+  });
+  const merged = {};
+  Object.entries(allHours).forEach(([h,d]) => {
+    merged[h] = { wr: d.wr / d.count, n: d.n };
+  });
+  renderHourGridData(merged);
+}
+
+// ══════════════════════════════════════════════════════════════
+// STAT HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function setStatWR(wr, trades, be) {
+  const el = document.getElementById('statWR');
+  el.textContent = wr.toFixed(1) + '%';
+  el.className   = 'stat-value ' + (wr >= be ? 'green' : 'red');
+  document.getElementById('statWRSub').textContent = `${trades} trades · BE: ${be}%`;
+}
+
+function setStatRet(ret, mm) {
+  const el = document.getElementById('statRet');
+  el.textContent = (ret >= 0 ? '+' : '') + ret.toFixed(1) + '%';
+  el.className   = 'stat-value ' + (ret >= 0 ? 'green' : 'red');
+  document.getElementById('statRetSub').textContent = `from $1,000 · ${mm}`;
+}
+
+function setStatFinal(final, mm) {
+  document.getElementById('statFinal').textContent =
+    '$' + Math.round(final).toLocaleString();
+  document.getElementById('statFinalSub').textContent = mm;
+}
+
+function setStatDD(dd) {
+  const el = document.getElementById('statDD');
+  el.textContent = dd.toFixed(1) + '%';
+  el.className   = 'stat-value ' + (dd < 5 ? 'green' : dd < 15 ? 'gold' : 'red');
+}
+
+function setStatAvgR(r) {
+  const el = document.getElementById('statAvgR');
+  el.textContent = (r >= 0 ? '+' : '') + r.toFixed(3);
+  el.className   = 'stat-value ' + (r >= 0 ? 'green' : 'red');
+}
+
+// ══════════════════════════════════════════════════════════════
+// EQUITY CHART
+// ══════════════════════════════════════════════════════════════
+
+function renderEquityChart(series) {
+  const canvas = document.getElementById('equityChart');
+  const ctx    = canvas.getContext('2d');
+
+  // High DPI
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = (rect.width  || canvas.offsetWidth  || 800) * dpr;
+  canvas.height = (rect.height || 240) * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = canvas.width / dpr;
+  const H = canvas.height / dpr;
+  const PAD = { top: 20, right: 20, bottom: 40, left: 60 };
+  const CW  = W - PAD.left - PAD.right;
+  const CH  = H - PAD.top  - PAD.bottom;
+
+  // Background
+  ctx.fillStyle = '#111820';
+  ctx.fillRect(0, 0, W, H);
+
+  // Collect all equity values
+  let allVals = [];
+  series.forEach(s => allVals = allVals.concat(s.equity));
+  const minV = Math.min(...allVals) * 0.98;
+  const maxV = Math.max(...allVals) * 1.02;
+  const maxLen = Math.max(...series.map(s => s.equity.length));
+
+  function xPos(i, len) {
+    return PAD.left + (i / Math.max(len - 1, 1)) * CW;
+  }
+  function yPos(v) {
+    return PAD.top + CH - ((v - minV) / (maxV - minV)) * CH;
+  }
+
+  // Grid lines
+  ctx.strokeStyle = '#1e2a38';
+  ctx.lineWidth   = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = PAD.top + (g / 4) * CH;
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(PAD.left + CW, y);
+    ctx.stroke();
+
+    const v = maxV - (g / 4) * (maxV - minV);
+    ctx.fillStyle = '#4a6080';
+    ctx.font      = '10px Space Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('$' + Math.round(v).toLocaleString(), PAD.left - 6, y + 4);
+  }
+
+  // Baseline at $1000
+  const baseY = yPos(1000);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(PAD.left, baseY);
+  ctx.lineTo(PAD.left + CW, baseY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw each series
+  series.forEach(s => {
+    const len = s.equity.length;
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + CH);
+    grad.addColorStop(0, s.color + '30');
+    grad.addColorStop(1, s.color + '00');
+
+    ctx.beginPath();
+    ctx.moveTo(xPos(0, len), yPos(s.equity[0]));
+    for (let i = 1; i < len; i++) {
+      const x0 = xPos(i-1, len), y0 = yPos(s.equity[i-1]);
+      const x1 = xPos(i,   len), y1 = yPos(s.equity[i]);
+      const cpx = (x0 + x1) / 2;
+      ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+    }
+    ctx.lineTo(xPos(len-1, len), PAD.top + CH);
+    ctx.lineTo(xPos(0, len), PAD.top + CH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(xPos(0, len), yPos(s.equity[0]));
+    for (let i = 1; i < len; i++) {
+      const x0 = xPos(i-1, len), y0 = yPos(s.equity[i-1]);
+      const x1 = xPos(i,   len), y1 = yPos(s.equity[i]);
+      const cpx = (x0 + x1) / 2;
+      ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+    }
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Trade dots
+    if (s.outcomes) {
+      s.outcomes.forEach((o, i) => {
+        if (i >= len) return;
+        const x = xPos(i, len);
+        const y = yPos(s.equity[i]);
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle   = o === 'W' ? '#00ff88' : '#ff3d5a';
+        ctx.strokeStyle = '#080b10';
+        ctx.lineWidth   = 1.5;
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+  });
+
+  // X-axis labels
+  ctx.fillStyle = '#4a6080';
+  ctx.font      = '9px Space Mono, monospace';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(maxLen / 6));
+  for (let i = 0; i < maxLen; i += step) {
+    ctx.fillText(`T${i+1}`, xPos(i, maxLen), H - 8);
+  }
+
+  // Legend (multi-series)
+  if (series.length > 1) {
+    series.forEach((s, i) => {
+      const lx = PAD.left + i * 80;
+      const ly = PAD.top - 6;
+      ctx.fillStyle = s.color;
+      ctx.fillRect(lx, ly, 16, 3);
+      ctx.fillStyle = '#c8d8e8';
+      ctx.font      = '9px Space Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(s.label, lx + 20, ly + 4);
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MM TABLE
+// ══════════════════════════════════════════════════════════════
+
+const MM_LABELS = {
+  MM1: 'Fixed 1%',
+  MM2: 'Fixed 2%',
+  MM3: 'Fixed 3%',
+  MM4: 'G=2% / L=1%',
+  MM5: 'DD Throttle',
+  MM6: 'Loss Reduce',
+  MM7: 'Win Scale',
+  MM8: 'Prop Safe',
+};
+
+function renderMMTable(key) {
+  const s   = STRATEGIES[key];
+  const tbl = document.getElementById('mmTable');
+  let rows  = '';
+
+  Object.entries(s.mm).forEach(([mm, r]) => {
+    const isActive = mm === state.mm;
+    const retColor = r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+    const retStr   = (r.ret >= 0 ? '+' : '') + r.ret.toFixed(1) + '%';
+    rows += `<tr class="${isActive ? 'active-mm' : ''}" onclick="selectMM('${mm}')">
+      <td>${mm}</td>
+      <td style="color:var(--text-dim)">${MM_LABELS[mm]}</td>
+      <td style="color:${retColor};text-align:right">${retStr}</td>
+    </tr>`;
+  });
+
+  tbl.innerHTML = rows;
+}
+
+function renderMMTableAll() {
+  const tbl  = document.getElementById('mmTable');
+  const keys = ['BTC_G','BTC_L','ETH_G','SPY_L'];
+  let rows   = '<tr style="border-bottom:1px solid var(--border)"><td style="color:var(--text-dim)">Config</td><td style="color:var(--text-dim)">BTC-G</td><td style="color:var(--text-dim)">BTC-L</td><td style="color:var(--text-dim)">ETH-G</td></tr>';
+
+  Object.keys(STRATEGIES.BTC_G.mm).forEach(mm => {
+    const isActive = mm === state.mm;
+    let cells = `<td>${mm}</td>`;
+    ['BTC_G','BTC_L','ETH_G'].forEach(k => {
+      const r   = STRATEGIES[k].mm[mm];
+      const col = r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+      cells += `<td style="color:${col};text-align:right">${(r.ret>=0?'+':'')+r.ret.toFixed(1)}%</td>`;
+    });
+    rows += `<tr class="${isActive?'active-mm':''}" onclick="selectMM('${mm}')">${cells}</tr>`;
+  });
+
+  tbl.innerHTML = rows;
+}
+
+function selectMM(mm) {
+  state.mm = mm;
+  document.getElementById('mmSelect').value = mm;
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════
+// LEVERAGE TABLE
+// ══════════════════════════════════════════════════════════════
+
+function renderLevTable(key) {
+  const s   = STRATEGIES[key];
+  const tbl = document.getElementById('levTable');
+  let rows  = '';
+
+  const levLevels = [1,2,5,10,20,50,100,250,500];
+  levLevels.forEach(lev => {
+    const r = s.lev[lev];
+    if (!r) return;
+    const isActive = lev === state.leverage;
+    const retColor = r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+    const retStr   = (r.ret >= 0 ? '+' : '') + formatBig(r.ret) + '%';
+
+    let badge = '';
+    if (r.liqRate === 0)      badge = '<span class="risk-badge risk-safe">SAFE</span>';
+    else if (r.liqRate < 10)  badge = '<span class="risk-badge risk-caution">LOW</span>';
+    else if (r.liqRate < 25)  badge = '<span class="risk-badge risk-caution">MED</span>';
+    else                       badge = '<span class="risk-badge risk-danger">HIGH</span>';
+
+    rows += `<tr class="${isActive ? 'active-lev' : ''}" onclick="selectLev(${lev})">
+      <td>${lev}x</td>
+      <td style="color:${retColor}">${retStr}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+
+  tbl.innerHTML = rows;
+}
+
+function renderLevTableAll() {
+  const tbl  = document.getElementById('levTable');
+  const keys = ['BTC_G','BTC_L','ETH_G'];
+  let rows   = '<tr><td style="color:var(--text-dim)">Lev</td><td style="color:var(--text-dim)">BTC-G</td><td style="color:var(--text-dim)">BTC-L</td></tr>';
+
+  [1,2,5,10,20,50].forEach(lev => {
+    const isActive = lev === state.leverage;
+    let cells      = `<td>${lev}x</td>`;
+    ['BTC_G','BTC_L'].forEach(k => {
+      const r   = STRATEGIES[k].lev[lev];
+      const col = r && r.ret >= 0 ? 'var(--green)' : 'var(--red)';
+      const str = r ? (r.ret>=0?'+':'')+formatBig(r.ret)+'%' : '-';
+      cells += `<td style="color:${col}">${str}</td>`;
+    });
+    rows += `<tr class="${isActive?'active-lev':''}" onclick="selectLev(${lev})">${cells}</tr>`;
+  });
+
+  tbl.innerHTML = rows;
+}
+
+function selectLev(lev) {
+  state.leverage = lev;
+  document.getElementById('levSelect').value = lev;
+  render();
+}
+
+function formatBig(n) {
+  if (Math.abs(n) >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1000)    return (n/1000).toFixed(1) + 'k';
+  return n.toFixed(1);
+}
+
+function renderLevWarning(lev) {
+  const w = document.getElementById('levWarning');
+  if (!lev || lev.liqRate === undefined) { w.style.display = 'none'; return; }
+  if (lev.liqRate >= 25) {
+    w.style.display = 'block';
+    w.textContent   = `Warning: ${lev.liqRate}% liquidation rate at this leverage. High risk of account loss.`;
+  } else if (lev.liqRate >= 10) {
+    w.style.display = 'block';
+    w.style.color   = 'var(--gold)';
+    w.textContent   = `Caution: ${lev.liqRate}% liquidation rate. Use position sizing.`;
+  } else {
+    w.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// HOUR GRID
+// ══════════════════════════════════════════════════════════════
+
+function renderHourGrid(key) {
+  renderHourGridData(STRATEGIES[key].hours_wr);
+}
+
+function renderHourGridData(hours_wr) {
+  const grid = document.getElementById('hourGrid');
+  grid.innerHTML = '';
+
+  // Show all 24 hours, highlight active ones
+  for (let h = 0; h < 24; h++) {
+    const data = hours_wr[h] || hours_wr[String(h)];
+    const cell = document.createElement('div');
+    cell.className = 'hour-cell';
+
+    if (data && data.n > 0) {
+      const wr  = data.wr;
+      const intensity = wr / 100;
+      const r   = Math.round(255 * (1 - intensity));
+      const g   = Math.round(255 * intensity);
+      cell.style.background = `rgba(${r},${g},80,0.25)`;
+      cell.style.border = `1px solid rgba(${r},${g},80,0.4)`;
+      cell.innerHTML = `<div class="hour-num">${String(h).padStart(2,'0')}</div><div class="hour-wr" style="color:rgb(${r},${g},80)">${wr.toFixed(0)}%</div>`;
+      cell.title = `Hour ${h} UTC — ${wr.toFixed(1)}% WR (${data.n} trades)`;
+    } else {
+      cell.style.background = 'rgba(255,255,255,0.02)';
+      cell.style.border = '1px solid rgba(255,255,255,0.04)';
+      cell.innerHTML = `<div class="hour-num">${String(h).padStart(2,'0')}</div>`;
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SESSION HOURS
+// ══════════════════════════════════════════════════════════════
+
+function renderSessionHours(key) {
+  const s   = STRATEGIES[key];
+  const el  = document.getElementById('sessionHours');
+  const now = new Date().getUTCHours();
+
+  const hours = Object.keys(s.hours_wr).map(Number);
+  const parts = hours.map(h => {
+    const isNow = h === now;
+    const style = isNow ? 'color:var(--green);font-weight:700' : 'color:var(--accent)';
+    return `<span style="${style}">${String(h).padStart(2,'0')}:00</span>`;
+  });
+
+  el.innerHTML = parts.join(' &nbsp; ') +
+    `<div style="margin-top:6px;font-size:9px;color:var(--text-dim)">
+      Current UTC hour: <span style="color:var(--green)">${String(now).padStart(2,'0')}:xx</span>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// LIVE SIGNAL
+// ══════════════════════════════════════════════════════════════
+
+// ── Symbol map per strategy ──────────────────────────────────
+const SYMBOL_MAP = {
+  BTC_G: { symbol: 'BTCUSDT', timeframe: '15m' },
+  BTC_L: { symbol: 'BTCUSDT', timeframe: '15m' },
+  ETH_G: { symbol: 'ETHUSDT', timeframe: '15m' },
+  SPY_L: { symbol: 'SPY',     timeframe: '1h'  },
+};
+
+// ── Live signal panel ─────────────────────────────────────────
+let liveSignalInterval = null;
+
+async function fetchLiveSignal() {
+  const btn = document.querySelector('.sidebar button');
+  btn.textContent = 'Fetching...';
+  btn.disabled    = true;
+
+  const key    = state.strategy === 'ALL' ? 'BTC_G' : state.strategy;
+  const { symbol, timeframe } = SYMBOL_MAP[key] || SYMBOL_MAP.BTC_G;
+
+  try {
+    const url = `http://127.0.0.1:8000/signal/latest?symbol=${symbol}&timeframe=${timeframe}&bars=120`;
+    const res = await fetch(url, { method: 'GET' });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const d    = data.decision || {};
+    const dir  = d.bias || 'NO TRADE';
+    const conf = d.confidence || 0;
+    const grade= d.setup_grade || '-';
+    const reg  = d.regime || '-';
+    const atr  = d.atr_context || '-';
+    const sb   = d.score_breakdown || {};
+    const wme  = data.wme || {};
+
+    // ── Update stat bar with live data ────────────────────────
+    const dirColor = dir.includes('LONG')  ? 'var(--green)' :
+                     dir.includes('SHORT') ? 'var(--red)'   : 'var(--text-dim)';
+
+    document.getElementById('statWR').textContent  = dir;
+    document.getElementById('statWR').style.color  = dirColor;
+    document.getElementById('statWRSub').textContent = `Conf: ${conf}% · Grade ${grade}`;
+
+    document.getElementById('statRet').textContent      = `${conf}%`;
+    document.getElementById('statRet').style.color      = conf >= 65 ? 'var(--green)' : 'var(--gold)';
+    document.getElementById('statRetSub').textContent   = `Confidence · ${reg}`;
+
+    document.getElementById('statFinal').textContent    = `$${data.price?.toFixed(2) || '-'}`;
+    document.getElementById('statFinalSub').textContent = `${symbol} live price`;
+
+    document.getElementById('statDD').textContent = atr;
+    document.getElementById('statAvgR').textContent =
+      (sb.total || 0) >= 0 ? `+${(sb.total||0).toFixed(1)}` : `${(sb.total||0).toFixed(1)}`;
+
+    // ── Session status ────────────────────────────────────────
+    const inSession = data.in_session;
+    document.getElementById('sessionHours').innerHTML =
+      `<div style="margin-bottom:6px">${data.session_hours?.map(h =>
+        `<span style="color:${h === data.utc_hour ? 'var(--green)' : 'var(--accent)'};font-weight:${h===data.utc_hour?700:400}">${String(h).padStart(2,'0')}:00</span>`
+      ).join(' &nbsp; ') || ''}</div>
+      <div style="font-size:9px;color:${inSession?'var(--green)':'var(--muted)'}">
+        ${inSession ? 'IN SESSION NOW' : 'Outside session hours'}
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);margin-top:2px">
+        UTC ${String(data.utc_hour).padStart(2,'0')}:xx
+      </div>`;
+
+    // ── WME signal indicator ──────────────────────────────────
+    const wmeEl = document.getElementById('wmeStatus');
+    if (wmeEl) {
+      const wmeDir   = wme.long_entry ? 'LONG ENTRY' : wme.short_entry ? 'SHORT ENTRY' : 'NO SIGNAL';
+      const wmeColor = wme.long_entry ? 'var(--green)' : wme.short_entry ? 'var(--red)' : 'var(--text-dim)';
+      wmeEl.textContent = wmeDir;
+      wmeEl.style.color = wmeColor;
+    }
+
+    // ── Score breakdown ───────────────────────────────────────
+    updateScoreBar('scoreStruct',  sb.structure  || 0, 25);
+    updateScoreBar('scoreLoc',     sb.location   || 0, 10);
+    updateScoreBar('scoreMom',     sb.momentum   || 0, 10);
+    updateScoreBar('scoreFlow',    sb.order_flow || 0, 25);
+
+    // ── Flash border to show update ───────────────────────────
+    const flash = document.querySelector('.stat-bar');
+    flash.style.outline = `2px solid ${dirColor}`;
+    setTimeout(() => flash.style.outline = '', 1500);
+
+    showLivePanel(data);
+
+  } catch(e) {
+    showOfflineState(e.message);
+  }
+
+  btn.textContent = 'Refresh Signal';
+  btn.disabled    = false;
+}
+
+function updateScoreBar(id, value, max) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const pct = Math.min(100, Math.abs(value) / max * 100);
+  el.style.width = pct + '%';
+  el.style.background = value >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function showOfflineState(msg) {
+  const btn = document.querySelector('.sidebar button');
+  btn.textContent = 'Server Offline';
+  btn.style.color = 'var(--red)';
+  btn.style.borderColor = 'var(--red)';
+  setTimeout(() => {
+    btn.textContent  = 'Refresh Signal';
+    btn.style.color  = '';
+    btn.style.borderColor = '';
+    btn.disabled = false;
+  }, 3000);
+}
+
+function showLivePanel(data) {
+  let panel = document.getElementById('livePanel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'livePanel';
+    panel.style.cssText = `
+      position:fixed; bottom:24px; right:24px;
+      width:280px; background:var(--surface);
+      border:1px solid var(--border); border-radius:12px;
+      padding:20px; z-index:200;
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+      font-family:var(--font-mono); font-size:11px;
+    `;
+    document.body.appendChild(panel);
+  }
+
+  const d     = data.decision || {};
+  const dir   = d.bias || 'NO TRADE';
+  const col   = dir.includes('LONG') ? 'var(--green)' :
+                dir.includes('SHORT') ? 'var(--red)' : 'var(--text-dim)';
+  const wme   = data.wme || {};
+  const sb    = d.score_breakdown || {};
+  const inSes = data.in_session;
+
+  panel.innerHTML = `
+    <div style="font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">
+      Live Signal · ${data.symbol}
+    </div>
+    <div style="font-size:24px;font-weight:800;color:${col};margin-bottom:8px">${dir}</div>
+    <div style="color:var(--text-dim);line-height:2">
+      <div>Confidence  <strong style="color:var(--text)">${d.confidence || 0}%</strong></div>
+      <div>Grade       <strong style="color:var(--accent)">${d.setup_grade || '-'}</strong></div>
+      <div>Regime      <strong style="color:var(--text)">${d.regime || '-'}</strong></div>
+      <div>ATR Context <strong style="color:var(--text)">${d.atr_context || '-'}</strong></div>
+      <div>WME Signal  <strong id="wmeStatus" style="color:${wme.long_entry?'var(--green)':wme.short_entry?'var(--red)':'var(--text-dim)'}">
+        ${wme.long_entry ? 'LONG' : wme.short_entry ? 'SHORT' : 'NONE'}</strong></div>
+      <div>Session     <strong style="color:${inSes?'var(--green)':'var(--muted)'}">
+        ${inSes?'ACTIVE':'INACTIVE'}</strong></div>
+      <div>Price       <strong style="color:var(--text)">$${data.price?.toFixed(2)}</strong></div>
+      <div>UTC Hour    <strong style="color:var(--text)">${String(data.utc_hour).padStart(2,'0')}:xx</strong></div>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:6px">SCORES</div>
+      ${[['Structure',sb.structure||0,25],['Location',sb.location||0,10],
+          ['Momentum',sb.momentum||0,10],['Order Flow',sb.order_flow||0,25]]
+        .map(([label,val,mx]) => `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <div style="width:64px;color:var(--text-dim);font-size:9px">${label}</div>
+          <div style="flex:1;height:4px;background:var(--border);border-radius:2px">
+            <div style="width:${Math.min(100,Math.abs(val)/mx*100)}%;height:100%;
+              background:${val>=0?'var(--green)':'var(--red)'};border-radius:2px"></div>
+          </div>
+          <div style="width:30px;text-align:right;color:${val>=0?'var(--green)':'var(--red)'}">${val}</div>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:9px;color:var(--text-dim);line-height:1.6">
+      ${d.entry_logic || ''}
+    </div>
+    <button onclick="document.getElementById('livePanel').remove()"
+      style="margin-top:12px;width:100%;padding:6px;background:transparent;
+        border:1px solid var(--border);border-radius:6px;color:var(--text-dim);
+        font-size:10px;cursor:pointer">Dismiss</button>
+  `;
+}
+
+// Auto-refresh every 60 seconds when server is available
+function startAutoRefresh() {
+  if (liveSignalInterval) clearInterval(liveSignalInterval);
+  liveSignalInterval = setInterval(fetchLiveSignal, 60000);
+}
+
+</script>
+</body>
+</html>

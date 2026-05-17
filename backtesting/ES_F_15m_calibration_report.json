@@ -1,0 +1,185 @@
+{
+  "symbol": "ES=F",
+  "timeframe": "15m",
+  "total_bars": 2000,
+  "total_signals": 946,
+  "total_trades": 75,
+  "rr_ratio": 2.0,
+  "by_grade": {
+    "A": {
+      "count": 47,
+      "wins": 13,
+      "losses": 34,
+      "win_rate": 27.7,
+      "avg_confidence": 91.4,
+      "expectancy_r": -0.17
+    },
+    "B": {
+      "count": 28,
+      "wins": 5,
+      "losses": 23,
+      "win_rate": 17.9,
+      "avg_confidence": 69.1,
+      "expectancy_r": -0.464
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    },
+    "NONE": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    }
+  },
+  "by_regime": {
+    "TRENDING_UP": {
+      "count": 74,
+      "win_rate": 24.3
+    },
+    "TRENDING_DOWN": {
+      "count": 1,
+      "win_rate": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 74,
+      "win_rate": 24.3
+    },
+    "SHORT": {
+      "count": 1,
+      "win_rate": 0.0
+    }
+  },
+  "by_hour": {
+    "0": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "1": {
+      "count": 5,
+      "win_rate": 0.0
+    },
+    "2": {
+      "count": 2,
+      "win_rate": 0.0
+    },
+    "3": {
+      "count": 5,
+      "win_rate": 40.0
+    },
+    "4": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "5": {
+      "count": 3,
+      "win_rate": 33.3
+    },
+    "7": {
+      "count": 4,
+      "win_rate": 25.0
+    },
+    "8": {
+      "count": 5,
+      "win_rate": 40.0
+    },
+    "9": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "10": {
+      "count": 8,
+      "win_rate": 25.0
+    },
+    "11": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "12": {
+      "count": 4,
+      "win_rate": 25.0
+    },
+    "13": {
+      "count": 4,
+      "win_rate": 50.0
+    },
+    "14": {
+      "count": 2,
+      "win_rate": 50.0
+    },
+    "15": {
+      "count": 4,
+      "win_rate": 0.0
+    },
+    "16": {
+      "count": 3,
+      "win_rate": 33.3
+    },
+    "18": {
+      "count": 3,
+      "win_rate": 0.0
+    },
+    "19": {
+      "count": 3,
+      "win_rate": 33.3
+    },
+    "20": {
+      "count": 5,
+      "win_rate": 0.0
+    },
+    "21": {
+      "count": 2,
+      "win_rate": 0.0
+    },
+    "22": {
+      "count": 2,
+      "win_rate": 0.0
+    },
+    "23": {
+      "count": 3,
+      "win_rate": 0.0
+    }
+  },
+  "score_buckets": {
+    "75-100": {
+      "count": 47,
+      "win_rate": 27.7
+    },
+    "60-74": {
+      "count": 28,
+      "win_rate": 17.9
+    },
+    "50-59": {
+      "count": 0,
+      "win_rate": 0.0
+    }
+  },
+  "no_trade_filter_effectiveness": {
+    "engine_no_trade": 954,
+    "filter_rejected": 503,
+    "total_blocked": 1457,
+    "pct_of_total_bars": 72.9
+  },
+  "active_filters": {
+    "skip_grade_c": true,
+    "skip_breakout": true,
+    "skip_opposing_mom": true,
+    "min_conf_A": 80.0,
+    "min_conf_B": 65.0
+  },
+  "calibration_table": {
+    "A": 27.7,
+    "B": 17.9,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}

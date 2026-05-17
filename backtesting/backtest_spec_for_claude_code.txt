@@ -1,0 +1,242 @@
+BACKTEST ENGINE V1 — IMPLEMENTATION SPEC
+═══════════════════════════════════════════════════════════
+
+PURPOSE
+───────
+Validate the V3 signal engine against historical OHLCV data.
+Replace heuristic win-rate estimates with empirically measured
+expectancy, calibrate grade thresholds, and identify which
+assets/timeframes the system performs best on.
+
+═══════════════════════════════════════════════════════════
+WHAT TO BUILD IN CLAUDE CODE
+═══════════════════════════════════════════════════════════
+
+FILE: backtest_runner.py
+
+This script takes a historical OHLCV CSV file, runs the full
+V3 indicator + scoring pipeline bar-by-bar, simulates trade
+outcomes, and outputs a calibration report.
+
+═══════════════════════════════════════════════════════════
+INPUT FORMAT
+═══════════════════════════════════════════════════════════
+
+CSV file with columns:
+  timestamp, open, high, low, close, volume
+
+Minimum 500 bars recommended. 2,000+ bars ideal.
+
+Supported sources:
+  - Yahoo Finance (yfinance download)
+  - TradingView historical export
+  - Any OHLCV CSV with the above columns
+
+═══════════════════════════════════════════════════════════
+PIPELINE (bar-by-bar)
+═══════════════════════════════════════════════════════════
+
+For each bar i (starting from bar 100 to allow indicator warmup):
+
+  STEP 1: slice df = full_data[0:i]
+          (never look ahead — only bars up to and including bar i)
+
+  STEP 2: run compute_all_indicators(df)
+          from indicator_engine.py
+
+  STEP 3: run score_signal(enriched_signal)
+          from scoring_engine_py.py
+
+  STEP 4: if signal.direction != 'NO TRADE':
+            record the signal with:
+              - entry_bar index i
+              - entry_price = close[i]
+              - direction (LONG/SHORT)
+              - grade (A/B/C)
+              - confidence score
+              - regime
+              - score_breakdown
+
+  STEP 5: simulate outcome
+            Look forward N bars (default N=10, configurable)
+            For LONG:
+              target = entry_price + (atr_val * 2.0)   # 2R target
+              stop   = entry_price - (atr_val * 1.0)   # 1R stop
+            For SHORT:
+              target = entry_price - (atr_val * 2.0)
+              stop   = entry_price + (atr_val * 1.0)
+
+            Walk forward bars i+1 to i+N:
+              if high[j] >= target → WIN (before checking stop)
+              if low[j]  <= stop   → LOSS
+              if neither in N bars → TIMEOUT (neutral, count as LOSS
+                                     for conservative calibration)
+
+  STEP 6: log result to trade_log list
+
+═══════════════════════════════════════════════════════════
+DEDUPLICATION RULE
+═══════════════════════════════════════════════════════════
+
+Do NOT log a new signal if the previous signal in the same
+direction is still active (i.e., within its N-bar forward window).
+This prevents the same trade from being counted multiple times
+when a signal persists across several bars.
+
+═══════════════════════════════════════════════════════════
+OUTPUT 1: trade_log.csv
+═══════════════════════════════════════════════════════════
+
+Columns:
+  bar_index, timestamp, symbol, timeframe,
+  direction, grade, confidence, regime,
+  score_structure, score_location, score_momentum,
+  score_orderflow, score_volatility, score_total,
+  entry_price, target_price, stop_price,
+  outcome (WIN/LOSS/TIMEOUT),
+  bars_to_outcome
+
+═══════════════════════════════════════════════════════════
+OUTPUT 2: calibration_report.json
+═══════════════════════════════════════════════════════════
+
+{
+  "symbol": "AAPL",
+  "timeframe": "5m",
+  "total_signals": 0,
+  "total_trades": 0,
+
+  "by_grade": {
+    "A": { "count": 0, "wins": 0, "losses": 0, "win_rate": 0.0,
+           "avg_confidence": 0.0, "expectancy_r": 0.0 },
+    "B": { ... },
+    "C": { ... }
+  },
+
+  "by_regime": {
+    "TRENDING":   { "count": 0, "win_rate": 0.0 },
+    "RANGING":    { ... },
+    "BREAKOUT":   { ... },
+    "REVERSAL":   { ... },
+    "EXHAUSTION": { ... },
+    "UNCERTAIN":  { ... }
+  },
+
+  "by_direction": {
+    "LONG":  { "count": 0, "win_rate": 0.0 },
+    "SHORT": { "count": 0, "win_rate": 0.0 }
+  },
+
+  "score_buckets": {
+    "75-100": { "count": 0, "win_rate": 0.0 },
+    "60-74":  { "count": 0, "win_rate": 0.0 },
+    "50-59":  { "count": 0, "win_rate": 0.0 }
+  },
+
+  "no_trade_filter_effectiveness": {
+    "signals_filtered": 0,
+    "pct_of_total_bars": 0.0
+  },
+
+  "calibration_table": {
+    "A": 0.0,
+    "B": 0.0,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}
+
+═══════════════════════════════════════════════════════════
+OUTPUT 3: console summary
+═══════════════════════════════════════════════════════════
+
+Print a readable summary after completion:
+
+  ══════════════════════════════════════════
+  BACKTEST COMPLETE: AAPL / 5m
+  Bars processed : 2,847
+  Signals found  : 312
+  Trades simulated: 187  (after dedup)
+  ──────────────────────────────────────────
+  Grade A : 42 trades  Win rate: 61.9%  Expectancy: +0.24R
+  Grade B : 89 trades  Win rate: 53.9%  Expectancy: +0.08R
+  Grade C : 56 trades  Win rate: 46.4%  Expectancy: -0.07R
+  ──────────────────────────────────────────
+  Best regime : TRENDING (64.2% win rate)
+  Worst regime: UNCERTAIN (38.1% win rate)
+  ──────────────────────────────────────────
+  NO TRADE filter saved: 160 bad trades
+  ══════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════
+HOW TO LOAD CALIBRATION RESULTS INTO THE SCORING ENGINE
+═══════════════════════════════════════════════════════════
+
+After backtest is complete, update _CALIBRATION_TABLE in
+scoring_engine_py.py with the measured win rates:
+
+  _CALIBRATION_TABLE = {
+    (75, 100): (61.9, "A", "Measured on AAPL 5m, 42 trades"),
+    (60,  75): (53.9, "B", "Measured on AAPL 5m, 89 trades"),
+    (50,  60): (46.4, "C", "Measured on AAPL 5m, 56 trades"),
+    (0,   50): (40.0, "NONE", "Below threshold — no edge"),
+  }
+
+And flip the "calibrated" flag to True in get_calibration_note().
+The dashboard will then show real measured win rates instead of
+heuristic estimates, and the warning tag will disappear.
+
+═══════════════════════════════════════════════════════════
+IMPLEMENTATION NOTES FOR CLAUDE CODE
+═══════════════════════════════════════════════════════════
+
+1. Import compute_all_indicators from indicator_engine.py
+   Import score_signal from scoring_engine_py.py
+   (Both files are already in the project)
+
+2. The enriched_signal passed to score_signal must include:
+     { "indicator_snapshot": <output of compute_all_indicators>,
+       "derived_context": { "regime": "" },  # leave blank — V3 computes it
+       "execution_input": { "allow_long": True, "allow_short": True,
+                            "force_no_trade": False } }
+
+3. ATR value for stop/target sizing:
+   Extract from indicator_snapshot["atr"]["atr_value"]
+
+4. CLI usage target:
+   python backtest_runner.py --file historical.csv \
+                             --symbol AAPL \
+                             --timeframe 5m \
+                             --forward-bars 10 \
+                             --rr-ratio 2.0
+
+5. yfinance download helper (optional, to generate fresh CSV):
+   import yfinance as yf
+   df = yf.download("AAPL", period="1y", interval="5m")
+   df.to_csv("historical.csv")
+
+═══════════════════════════════════════════════════════════
+ROBUSTNESS VALIDATION (run after first backtest)
+═══════════════════════════════════════════════════════════
+
+Once basic backtest works, add these validation passes:
+
+1. WALK-FORWARD TEST
+   Split data 70/30. Train thresholds on first 70%.
+   Test on last 30% without any look-back.
+   Compare win rates. If they diverge >10%, the system
+   is fitting to noise in the training window.
+
+2. REGIME STABILITY TEST
+   Re-run backtest with ATR multiplier ±0.2 (1.3 and 1.7).
+   If signal count changes >20%, the ZigZag is fragile.
+
+3. NO-TRADE FILTER TEST
+   Count how many NO TRADE bars would have been wins
+   if forced to trade. This measures filter value.
+   Target: filter should block more losers than winners.
+
+4. THRESHOLD SENSITIVITY TEST
+   Re-run with grade thresholds ±5 points (e.g., A at 70 and 80).
+   Win rates should not change dramatically.
+   If they do, the thresholds are overfit.

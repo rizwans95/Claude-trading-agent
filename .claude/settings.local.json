@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python backtest_runner.py --symbol ES=F --timeframe 5m)",
+      "Bash(python -c ' *)",
+      "Bash(python backtest_runner.py --symbol BTCUSDT --timeframe 5m)",
+      "Bash(python -c \"import backtest_runner; print\\('syntax OK'\\)\")",
+      "Bash(python backtest_runner.py --symbols AAPL ES=F --timeframes 15m 4h --bars 2000 --out-dir .)",
+      "Bash(python -m py_compile scoring_engine_py.py)",
+      "Bash(python backtest_runner.py --symbols BTCUSDT --timeframes 15m 4h --rr-ratio 1.8 --fetch)",
+      "Bash(pip install *)",
+      "Bash(python \"..\\\\backtesting\\\\backtest_runner.py\")",
+      "Bash(set \"PYTHONPATH=C:\\\\Users\\\\riz_e\\\\Desktop\\\\Computer Agent Master Files\\\\TRADING AGENT V2\\\\phase 2 files - python backend\")",
+      "Bash(python backtest_runner.py)",
+      "Bash(python -c \"import sys; sys.path.insert\\(0,'C:\\\\\\\\Users\\\\\\\\riz_e\\\\\\\\Desktop\\\\\\\\Computer Agent Master Files\\\\\\\\TRADING AGENT V2\\\\\\\\phase 2 files - python backend'\\); import indicator_engine; print\\('OK'\\)\")"
+    ]
+  }
+}

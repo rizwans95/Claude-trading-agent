@@ -1,0 +1,214 @@
+TREND SPEED ANALYZER — INDICATOR DEFINITION
+═══════════════════════════════════════════════════════════
+
+Source      : Trend Speed Analyzer [Zeiierman]
+Author      : © Zeiierman
+Pine Script : v6
+License     : CC BY-NC-SA 4.0
+Role        : Momentum regime classification (MEDIUM-HIGH PRIORITY)
+Usage       : Two plot() outputs exist (dyn_ema, trendspeed).
+              Wave analysis table computed at barstate.islast —
+              replicated in Python backend for continuous feed.
+
+═══════════════════════════════════════════════════════════
+WHAT THIS INDICATOR DOES — TWO ENGINES
+═══════════════════════════════════════════════════════════
+
+ENGINE 1 — Dynamic Adaptive EMA
+  An EMA whose smoothing period adapts dynamically:
+    counts_diff_norm = normalized price position
+    dyn_length = 5 + counts_diff_norm * (max_length - 5)
+    accel_factor = rate of change in counts_diff (normalized)
+    alpha = (2 / (dyn_length + 1)) * (1 + accel_factor * multiplier)
+    dyn_ema = alpha * close + (1 - alpha) * dyn_ema[1]
+
+  When price moves fast → alpha increases → EMA reacts faster
+  When price drifts slowly → alpha decreases → EMA smooths more
+
+  Key output: trend = dyn_ema
+  Direction signal: close > dyn_ema = BULLISH
+                    close < dyn_ema = BEARISH
+
+ENGINE 2 — Wave Speed System
+  Accumulates smoothed close-open difference within each trend leg:
+    c = ta.rma(close, 10)
+    o = ta.rma(open, 10)
+    speed += c - o  (resets on trend flip)
+    trendspeed = ta.hma(speed, 5)  (Hull MA smoothing)
+
+  When price crosses ABOVE dyn_ema:
+    → Stores completed bearish leg speed
+    → Resets speed for new bullish leg
+    → pos = +1
+
+  When price crosses BELOW dyn_ema:
+    → Stores completed bullish leg speed
+    → Resets speed for new bearish leg
+    → pos = -1
+
+  Speed accumulates momentum within the current trend leg.
+  A rising positive speed = strengthening bull momentum.
+  A rising negative speed = strengthening bear momentum.
+
+WAVE ANALYSIS TABLE (computed at barstate.islast):
+  bull_avg  = average bullish wave height (lookback period)
+  bear_avg  = average bearish wave height (lookback period)
+  bull_max  = maximum bullish wave (lookback period)
+  bear_max  = maximum bearish wave (lookback period)
+
+  current_ratio_avg = current speed / average wave size
+    > 1.0 = current move STRONGER than average = expanding
+    < 0.4 = current move MUCH WEAKER than average = exhaustion
+
+  current_ratio_max = current speed / max wave size
+    > 1.0 = current move BREAKING historical extreme = climax risk
+
+  dominance = bull_avg vs bear_avg comparison
+    "Bullish +1.45x" or "Bearish -2.1x"
+
+═══════════════════════════════════════════════════════════
+WEBHOOK COMPATIBILITY
+═══════════════════════════════════════════════════════════
+
+STATUS: PARTIAL — Two plot() outputs exist
+
+Existing plots (webhook-accessible on paid plan):
+  plot(dyn_ema, ...)      → dynamic trend EMA value (overlay)
+  plot(trendspeed, ...)   → trend speed histogram value
+
+Not webhook-accessible (computed only at barstate.islast):
+  wave_analysis table values (bull_avg, bear_avg, ratios, dominance)
+
+Resolution: Wave analysis replicated in Python backend
+by tracking leg speed history across bars.
+
+═══════════════════════════════════════════════════════════
+ALL SIGNAL FORMAT FIELDS
+═══════════════════════════════════════════════════════════
+
+speed_raw           : float  — raw accumulated speed value
+speed_normalized    : float  — 0.0 to 1.0 (position within range)
+trendspeed_hma      : float  — HMA(speed, 5) — the plotted value
+dyn_ema             : float  — dynamic adaptive EMA value
+direction           : string — "BULLISH" | "BEARISH" | "FLAT"
+regime              : string — "EXPANSION" | "EXHAUSTION" |
+                               "CONSOLIDATION" | "NORMAL"
+price_vs_ema        : string — "ABOVE" | "BELOW" | "CROSSING"
+
+wave_analysis:
+  current_ratio_avg : float  — current speed / avg wave size
+  current_ratio_max : float  — current speed / max wave size
+  dominance         : string — "BULLISH" | "BEARISH" | "NEUTRAL"
+  dominance_factor  : float  — magnitude of dominance difference
+
+═══════════════════════════════════════════════════════════
+PYTHON COMPUTATION LOGIC
+═══════════════════════════════════════════════════════════
+
+def compute_trend_speed(df, max_length=50, accel_multiplier=5.0):
+    c = df['close'].ewm(span=10).mean()
+    o = df['open'].ewm(span=10).mean()
+
+    # Dynamic EMA
+    counts_diff = df['close']
+    max_abs = counts_diff.abs().rolling(200).max()
+    counts_diff_norm = (counts_diff + max_abs) / (2 * max_abs)
+    dyn_length = 5 + counts_diff_norm * (max_length - 5)
+
+    # Accelerator factor
+    delta = counts_diff.diff().abs()
+    max_delta = delta.rolling(200).max().replace(0, 1)
+    accel_factor = delta / max_delta
+
+    alpha = (2 / (dyn_length + 1)) * (1 + accel_factor * accel_multiplier)
+    alpha = alpha.clip(upper=1.0)
+
+    dyn_ema = df['close'].copy()
+    for i in range(1, len(df)):
+        dyn_ema.iloc[i] = (alpha.iloc[i] * df['close'].iloc[i] +
+                           (1 - alpha.iloc[i]) * dyn_ema.iloc[i-1])
+
+    # Speed accumulation
+    speed = pd.Series(0.0, index=df.index)
+    pos = 0
+    bull_legs, bear_legs = [], []
+
+    for i in range(1, len(df)):
+        bar_speed = c.iloc[i] - o.iloc[i]
+        speed.iloc[i] = speed.iloc[i-1] + bar_speed
+
+        if df['close'].iloc[i] > dyn_ema.iloc[i] and df['close'].iloc[i-1] <= dyn_ema.iloc[i-1]:
+            bear_legs.append(speed.iloc[i-1])
+            speed.iloc[i] = bar_speed
+            pos = 1
+
+        elif df['close'].iloc[i] < dyn_ema.iloc[i] and df['close'].iloc[i-1] >= dyn_ema.iloc[i-1]:
+            bull_legs.append(speed.iloc[i-1])
+            speed.iloc[i] = bar_speed
+            pos = -1
+
+    trendspeed = speed.rolling(5).mean()  # simplified HMA approximation
+
+    return dyn_ema, speed, trendspeed, bull_legs, bear_legs
+
+def get_regime(current_ratio_avg, trendspeed, threshold=0.05):
+    if current_ratio_avg > 1.2:
+        return "EXPANSION"
+    elif current_ratio_avg < 0.4:
+        return "EXHAUSTION"
+    elif abs(trendspeed) < threshold:
+        return "CONSOLIDATION"
+    return "NORMAL"
+
+def get_speed_normalized(speed, lookback=100):
+    min_s = speed.rolling(lookback).min()
+    max_s = speed.rolling(lookback).max()
+    return ((speed - min_s) / (max_s - min_s)).clip(0, 1)
+
+═══════════════════════════════════════════════════════════
+HISTOGRAM COLOR INTERPRETATION
+═══════════════════════════════════════════════════════════
+
+speed > 0 + normalized_speed high  = bright green
+  → Strong bullish momentum, accelerating
+speed > 0 + normalized_speed low   = dim green
+  → Bullish momentum but weakening
+speed < 0 + normalized_speed high  = bright red
+  → Strong bearish momentum, accelerating
+speed < 0 + normalized_speed low   = dim red
+  → Bearish momentum but weakening
+
+═══════════════════════════════════════════════════════════
+SCORING CONTRIBUTION
+═══════════════════════════════════════════════════════════
+
+Priority : MEDIUM-HIGH (Momentum layer, max +10 / min -8)
+
+direction aligned + EXPANSION          → +10
+direction aligned + NORMAL             → +5
+direction aligned + CONSOLIDATION      → +2
+direction aligned + EXHAUSTION         → -5
+current_ratio_avg > 1.2 (accelerating) → +3 bonus
+current_ratio_avg < 0.4 (exhaustion)   → -3 penalty
+current_ratio_max > 1.0 (breakout)     → +2 bonus
+price_vs_ema = CROSSING                → -3
+dominance opposing structure           → -3
+
+═══════════════════════════════════════════════════════════
+IMPORTANT BEHAVIOURAL NOTES
+═══════════════════════════════════════════════════════════
+
+- current_ratio_avg is the single most valuable field
+  It normalises speed against historical context
+  A speed of 100 means nothing without knowing if
+  the average wave is 50 (strong) or 200 (weak)
+
+- EXHAUSTION regime reduces confidence REGARDLESS of
+  other signals — a trade in exhaustion has higher
+  reversal risk even if structure and CVD agree
+
+- CROSSING state on price_vs_ema = regime transition
+  Avoid entries during EMA crossing periods
+
+- dominance_factor > 2.0 = strongly one-sided market
+  Useful for regime confirmation in trending markets

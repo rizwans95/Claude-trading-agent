@@ -1,0 +1,8 @@
+bar_index,timestamp,hour_of_day,config,asset,symbol,timeframe,direction,grade,confidence,in_lvn,in_hvn,wme_speed,wme_sweep_bars_ago,wme_sweep_count_20,htf_bull,entry_price,stop_loss,targets_hit,r_multiple,outcome,bars_to_outcome
+141,2026-02-24 12:15:00,12,L_G_B_71214,SPY,SPY,15m,LONG,B,60.0,False,False,0.336,9,2,True,687.53009,683.106905,1,0.033,WIN,3
+201,2026-02-26 14:15:00,14,L_G_B_71214,SPY,SPY,15m,LONG,B,68.1,False,False,0.8715,14,2,True,688.609985,684.788897,2,0.131,WIN,2
+896,2026-04-07 12:30:00,12,L_G_B_71214,SPY,SPY,15m,LONG,B,64.2,False,False,0.614,5,1,True,656.080017,650.929671,2,0.229,WIN,4
+1259,2026-04-27 12:15:00,12,L_G_B_71214,SPY,SPY,15m,LONG,B,70.0,False,False,0.3353,3,1,True,713.859985,711.043165,0,-1.0,LOSS,15
+1294,2026-04-28 14:30:00,14,L_G_B_71214,SPY,SPY,15m,LONG,B,60.6,False,False,0.374,14,2,True,711.400024,708.83338,0,-1.0,LOSS,24
+1318,2026-04-29 14:00:00,14,L_G_B_71214,SPY,SPY,15m,LONG,B,65.5,False,False,0.7024,5,2,True,709.088013,706.546995,2,1.169,WIN,8
+1468,2026-05-07 12:30:00,12,L_G_B_71214,SPY,SPY,15m,LONG,B,64.6,False,False,0.641,0,3,True,732.780029,729.691139,0,2.451,WIN,60

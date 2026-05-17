@@ -1,0 +1,96 @@
+────────────────────────────────────────
+TRADINGVIEW → CLAUDE SIGNAL SPEC (V1)
+────────────────────────────────────────
+
+This specification defines the standardized JSON payload format that represents a complete market snapshot sent from TradingView to the Claude Trading Agent.
+
+This system is designed for structured decision-making, NOT prediction.
+
+All incoming data must be treated as:
+- deterministic market state input
+- not subjective interpretation
+- not incomplete signal fragments
+
+────────────────────────────────────────
+PAYLOAD FORMAT (REQUIRED STRUCTURE)
+────────────────────────────────────────
+
+{
+  "timestamp": "ISO-8601",
+  "symbol": "string",
+  "timeframe": "string",
+
+  "price": {
+    "open": float,
+    "high": float,
+    "low": float,
+    "close": float
+  },
+
+  "pivot_volume_profile": {
+    "poc": float,
+    "vah": float,
+    "val": float,
+    "value_area_position": "ABOVE_VA | BELOW_VA | INSIDE_VA"
+  },
+
+  "macd": {
+    "macd_line": float,
+    "signal_line": float,
+    "histogram": float,
+    "histogram_direction": "RISING | FALLING",
+    "zero_line_position": "ABOVE | BELOW"
+  },
+
+  "trend_speed": {
+    "speed_value": float,
+    "direction": "BULLISH | BEARISH | FLAT",
+    "regime": "EXPANSION | CONSOLIDATION | EXHAUSTION"
+  },
+
+  "zigzag_structure": {
+    "structure": "BULLISH | BEARISH | NEUTRAL",
+    "last_swing_high": float,
+    "last_swing_low": float,
+    "break_of_structure": "BOS_UP | BOS_DOWN | NONE"
+  },
+
+  "cvd_iq": {
+    "cvd_direction": "BUYING | SELLING | NEUTRAL",
+    "divergence": "BULLISH | BEARISH | NONE"
+  },
+
+  "atr": {
+    "atr_value": float,
+    "volatility_state": "LOW | NORMAL | HIGH",
+    "compression": true | false
+  }
+}
+
+────────────────────────────────────────
+RULES FOR DATA QUALITY
+────────────────────────────────────────
+
+1. All fields must be present (no missing keys)
+2. No human interpretation allowed inside payload
+3. Only raw indicator outputs are allowed
+4. No predictions, no trade ideas in this layer
+
+────────────────────────────────────────
+USAGE IN SYSTEM
+────────────────────────────────────────
+
+This payload is consumed by:
+- system_prompt.txt (decision engine)
+- scoring_engine.txt (V2 execution layer)
+- dashboard UI (visualization layer)
+
+────────────────────────────────────────
+INTENDED FUTURE EXTENSION (OPTIONAL)
+────────────────────────────────────────
+
+If automation is added later:
+- TradingView alerts → webhook POST → FastAPI server
+- server validates schema
+- server forwards to Claude decision engine
+────────────────────────────────────────

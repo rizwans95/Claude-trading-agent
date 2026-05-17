@@ -1,0 +1,86 @@
+{
+  "config": "G_STRICT_SESSION",
+  "asset": "ETH",
+  "symbol": "ETHUSDT",
+  "timeframe": "15m",
+  "total_bars": 10000,
+  "total_signals": 9819,
+  "total_trades": 25,
+  "wins": 17,
+  "win_rate": 68.0,
+  "avg_r": 0.281,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 11,
+      "win_rate": 81.8,
+      "avg_r": 0.663
+    },
+    "B": {
+      "count": 14,
+      "win_rate": 57.1,
+      "avg_r": -0.019
+    },
+    "C": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 16,
+      "win_rate": 56.2,
+      "avg_r": 0.282
+    },
+    "SHORT": {
+      "count": 9,
+      "win_rate": 88.9,
+      "avg_r": 0.279
+    }
+  },
+  "lvn_trades": {
+    "count": 2,
+    "win_rate": 100.0,
+    "avg_r": 0.759
+  },
+  "hvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "by_hour": {
+    "7": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": 0.463
+    },
+    "12": {
+      "count": 5,
+      "win_rate": 60.0,
+      "avg_r": -0.143
+    },
+    "14": {
+      "count": 12,
+      "win_rate": 66.7,
+      "avg_r": 0.392
+    },
+    "18": {
+      "count": 5,
+      "win_rate": 80.0,
+      "avg_r": 0.331
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 9819,
+    "no_trade": 9683,
+    "trades_taken": 25,
+    "filter_rate": 99.7
+  },
+  "pnl": {
+    "final": 1141.32,
+    "peak": 1194.47,
+    "max_drawdown_pct": 5.7,
+    "total_return_pct": 14.1
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "config": "A_WME_strict",
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "total_bars": 10000,
+  "total_signals": 9819,
+  "total_trades": 94,
+  "wins": 50,
+  "win_rate": 53.2,
+  "avg_r": -0.136,
+  "breakeven_wr": "35.7% (at 1.8R)",
+  "by_grade": {
+    "A": {
+      "count": 53,
+      "win_rate": 49.1,
+      "avg_r": -0.251
+    },
+    "B": {
+      "count": 41,
+      "win_rate": 58.5,
+      "avg_r": 0.013
+    },
+    "C": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_r": 0.0
+    }
+  },
+  "by_direction": {
+    "SHORT": {
+      "count": 42,
+      "win_rate": 57.1,
+      "avg_r": -0.114
+    },
+    "LONG": {
+      "count": 52,
+      "win_rate": 50.0,
+      "avg_r": -0.153
+    }
+  },
+  "lvn_trades": {
+    "count": 7,
+    "win_rate": 14.3,
+    "avg_r": -0.494
+  },
+  "hvn_trades": {
+    "count": 0,
+    "win_rate": 0.0,
+    "avg_r": 0.0
+  },
+  "by_hour": {
+    "0": {
+      "count": 5,
+      "win_rate": 40.0,
+      "avg_r": -0.548
+    },
+    "1": {
+      "count": 8,
+      "win_rate": 50.0,
+      "avg_r": -0.243
+    },
+    "2": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": -0.394
+    },
+    "3": {
+      "count": 5,
+      "win_rate": 40.0,
+      "avg_r": -0.116
+    },
+    "4": {
+      "count": 4,
+      "win_rate": 25.0,
+      "avg_r": -0.688
+    },
+    "5": {
+      "count": 7,
+      "win_rate": 42.9,
+      "avg_r": -0.079
+    },
+    "6": {
+      "count": 3,
+      "win_rate": 33.3,
+      "avg_r": 0.351
+    },
+    "7": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": 0.073
+    },
+    "8": {
+      "count": 5,
+      "win_rate": 80.0,
+      "avg_r": 0.072
+    },
+    "9": {
+      "count": 2,
+      "win_rate": 0.0,
+      "avg_r": -0.583
+    },
+    "11": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": -0.081
+    },
+    "12": {
+      "count": 4,
+      "win_rate": 50.0,
+      "avg_r": -0.049
+    },
+    "13": {
+      "count": 6,
+      "win_rate": 83.3,
+      "avg_r": 0.009
+    },
+    "14": {
+      "count": 11,
+      "win_rate": 90.9,
+      "avg_r": 0.211
+    },
+    "15": {
+      "count": 8,
+      "win_rate": 37.5,
+      "avg_r": -0.249
+    },
+    "16": {
+      "count": 1,
+      "win_rate": 0.0,
+      "avg_r": -0.296
+    },
+    "18": {
+      "count": 3,
+      "win_rate": 33.3,
+      "avg_r": -0.213
+    },
+    "19": {
+      "count": 1,
+      "win_rate": 0.0,
+      "avg_r": -0.262
+    },
+    "20": {
+      "count": 3,
+      "win_rate": 33.3,
+      "avg_r": 0.022
+    },
+    "21": {
+      "count": 1,
+      "win_rate": 0.0,
+      "avg_r": -1.0
+    },
+    "22": {
+      "count": 5,
+      "win_rate": 60.0,
+      "avg_r": -0.244
+    },
+    "23": {
+      "count": 3,
+      "win_rate": 66.7,
+      "avg_r": -0.025
+    }
+  },
+  "filter_effectiveness": {
+    "total_signals": 9819,
+    "no_trade": 7939,
+    "trades_taken": 94,
+    "filter_rate": 99.0
+  }
+}

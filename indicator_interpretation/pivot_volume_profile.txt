@@ -1,0 +1,145 @@
+PIVOT ANCHORED VOLUME PROFILE — INDICATOR DEFINITION
+═══════════════════════════════════════════════════════════
+
+Source      : Volume Profile, Pivot Anchored by DGT
+Author      : © dgtrd
+Pine Script : v6
+License     : Custom (SoleMare Analytics)
+Role        : Market equilibrium zone definition (HIGH PRIORITY)
+Usage       : Three plot() lines already exist in script
+              (commented out). Uncomment to enable webhook output.
+
+═══════════════════════════════════════════════════════════
+WHAT THIS INDICATOR DOES
+═══════════════════════════════════════════════════════════
+
+Anchors a volume profile between consecutive pivot
+highs and lows (detected via ta.pivothigh / ta.pivotlow).
+
+For each pivot-to-pivot window it computes:
+
+  POC  — Point of Control: price level with highest
+         traded volume. Acts as a market magnet.
+
+  VAH  — Value Area High: upper boundary of the price
+         range containing the top N% of traded volume
+         (default 68%).
+
+  VAL  — Value Area Low: lower boundary of the same
+         value area.
+
+Also tracks whether price has violated (crossed through)
+any historical POC or VA level.
+
+═══════════════════════════════════════════════════════════
+WEBHOOK COMPATIBILITY
+═══════════════════════════════════════════════════════════
+
+STATUS: READY — UNCOMMENT 3 LINES
+
+The original author included plot() outputs but commented
+them out. Uncomment the following three lines in the script
+to make POC, VAH, VAL available as webhook values:
+
+  //plot(barstate.islast ? priceLowest + (array.indexof(volumeStorageT, array.max(volumeStorageT)) + .50) * priceStep : na, 'Developing PoC', pocColor, display=display.none)
+  //plot(barstate.islast ? priceLowest + (levelAbovePoc + 1.00) * priceStep : na, 'Developing VAH', vahColor, display=display.none)
+  //plot(barstate.islast ? priceLowest + (levelBelowPoc + 0.00) * priceStep : na, 'Developing VAL', valColor, display=display.none)
+
+Remove the // from each line. These become plot_0, plot_1,
+plot_2 in TradingView alert message templates when a paid
+plan (Essential+) is active.
+
+Built-in alerts also fire on POC/VAH/VAL price crosses —
+useful as supplementary event triggers.
+
+═══════════════════════════════════════════════════════════
+RAW OUTPUTS FROM SCRIPT
+═══════════════════════════════════════════════════════════
+
+poc  : float — price of Point of Control
+vah  : float — price of Value Area High boundary
+val  : float — price of Value Area Low boundary
+
+═══════════════════════════════════════════════════════════
+FIELDS DERIVED IN PYTHON BACKEND
+═══════════════════════════════════════════════════════════
+
+poc_distance_pct    : float
+  (close - poc) / poc * 100
+  Positive = above POC, Negative = below POC
+  Near 0% = POC magnet zone active
+
+value_area_position : string
+  "ABOVE_VA"  = close > vah  (bullish breakout context)
+  "BELOW_VA"  = close < val  (bearish breakdown context)
+  "INSIDE_VA" = val <= close <= vah  (chop zone)
+
+value_area_width_pct : float
+  (vah - val) / (profile_high - profile_low) * 100
+  < 30% = narrow/compressed value area
+  > 70% = wide/extended value area
+
+profile_length_bars : int
+  Number of bars in the current profile window
+
+traded_volume       : float
+  Total volume traded within the current profile window
+
+═══════════════════════════════════════════════════════════
+PYTHON DERIVATION LOGIC
+═══════════════════════════════════════════════════════════
+
+def get_va_position(close, vah, val):
+    if close > vah:
+        return "ABOVE_VA"
+    elif close < val:
+        return "BELOW_VA"
+    return "INSIDE_VA"
+
+def get_poc_distance_pct(close, poc):
+    return round((close - poc) / poc * 100, 4)
+
+def get_va_width_pct(vah, val, profile_high, profile_low):
+    profile_range = profile_high - profile_low
+    if profile_range == 0:
+        return 0.0
+    return round((vah - val) / profile_range * 100, 2)
+
+═══════════════════════════════════════════════════════════
+KEY BEHAVIOURAL RULES
+═══════════════════════════════════════════════════════════
+
+POC:
+  Acts as a price MAGNET, not a breakout signal.
+  Price tends to return to POC in ranging conditions.
+  Do NOT use POC cross as a directional trade signal.
+  poc_distance_pct near 0 = mean reversion risk active.
+
+VAH:
+  Potential resistance in bullish moves.
+  Acceptance ABOVE VAH (price stays above) = bullish regime.
+  Rejection at VAH = high-probability short location.
+
+VAL:
+  Potential support in bearish moves.
+  Acceptance BELOW VAL = bearish regime.
+  Rejection at VAL = high-probability long location.
+
+INSIDE_VA:
+  Lower quality trade zone.
+  Automatically reduces confidence in scoring.
+  Only trade inside VA with extremely strong confluence.
+
+═══════════════════════════════════════════════════════════
+SCORING CONTRIBUTION
+═══════════════════════════════════════════════════════════
+
+Priority : HIGH (Location layer, max +10 / min -15)
+
+ABOVE_VA near VAH boundary   → +10
+ABOVE_VA accepted (>0.5%)    → +7
+BELOW_VA near VAL boundary   → +10
+BELOW_VA accepted (>0.5%)    → +7
+INSIDE_VA                    → -10
+poc_distance_pct < 0.1%      → -3 additional (magnet risk)
+value_area_width_pct > 70%   → -2 (extended range)

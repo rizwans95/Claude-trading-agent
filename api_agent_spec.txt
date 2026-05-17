@@ -1,0 +1,87 @@
+LIVE TRADING AGENT API SPECIFICATION
+
+This system allows external data (TradingView, webhook, or script) to send structured market data to Claude for decision-making.
+
+────────────────────────────────────────
+INPUT (REQUEST BODY)
+────────────────────────────────────────
+
+The agent receives:
+
+signal_format.json
+
+This includes:
+- price data
+- indicator_snapshot
+- regime hints
+- execution permissions
+
+────────────────────────────────────────
+PROCESS FLOW
+────────────────────────────────────────
+
+When request is received:
+
+1. Validate JSON structure
+2. Map indicators to internal schema
+3. Run full execution_engine.txt pipeline
+4. Apply regime_detection.txt
+5. Apply adaptive_weighting.txt
+6. Generate final trade decision
+
+────────────────────────────────────────
+OUTPUT (RESPONSE BODY)
+────────────────────────────────────────
+
+Return:
+
+{
+  "direction": "LONG | SHORT | NO TRADE",
+  "confidence": 0-10,
+  "setup_grade": "A | B | C | NONE",
+  "regime": "",
+  "score_breakdown": {
+    "structure": 0,
+    "momentum": 0,
+    "order_flow": 0,
+    "location": 0,
+    "volatility": 0
+  },
+  "invalidation_condition": "",
+  "timestamp": ""
+}
+
+────────────────────────────────────────
+WEBHOOK COMPATIBILITY
+────────────────────────────────────────
+
+System is designed to connect to:
+
+- TradingView alerts
+- Python backend (Flask / FastAPI)
+- Node.js API gateway
+- Manual batch JSON feeds
+
+────────────────────────────────────────
+STATELESS RULE
+────────────────────────────────────────
+
+Each request is independent.
+
+Memory is NOT stored in runtime.
+
+All learning comes from:
+- trade_memory_log.txt
+- feedback_system.txt
+- performance_dashboard_schema.json
+
+────────────────────────────────────────
+FAILSAFE RULE
+────────────────────────────────────────
+
+If:
+- JSON is incomplete
+- indicators missing
+- regime unclear
+
+→ return NO TRADE with confidence ≤ 5

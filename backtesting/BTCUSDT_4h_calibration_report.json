@@ -1,0 +1,135 @@
+{
+  "symbol": "BTCUSDT",
+  "timeframe": "4h",
+  "total_bars": 1000,
+  "total_signals": 297,
+  "total_trades": 26,
+  "rr_ratio": 1.8,
+  "by_grade": {
+    "A": {
+      "count": 19,
+      "wins": 6,
+      "losses": 13,
+      "win_rate": 31.6,
+      "avg_confidence": 91.3,
+      "expectancy_r": -0.053
+    },
+    "B": {
+      "count": 7,
+      "wins": 2,
+      "losses": 5,
+      "win_rate": 28.6,
+      "avg_confidence": 68.7,
+      "expectancy_r": -0.143
+    },
+    "C": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    },
+    "NONE": {
+      "count": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": 0.0,
+      "avg_confidence": 0.0,
+      "expectancy_r": -1.0
+    }
+  },
+  "by_regime": {
+    "TRENDING_UP": {
+      "count": 25,
+      "win_rate": 32.0
+    },
+    "RANGING": {
+      "count": 1,
+      "win_rate": 0.0
+    }
+  },
+  "by_direction": {
+    "LONG": {
+      "count": 26,
+      "win_rate": 30.8
+    }
+  },
+  "by_hour": {
+    "0": {
+      "count": 5,
+      "win_rate": 40.0
+    },
+    "4": {
+      "count": 5,
+      "win_rate": 20.0
+    },
+    "8": {
+      "count": 6,
+      "win_rate": 33.3
+    },
+    "12": {
+      "count": 4,
+      "win_rate": 25.0
+    },
+    "16": {
+      "count": 4,
+      "win_rate": 25.0
+    },
+    "20": {
+      "count": 2,
+      "win_rate": 50.0
+    }
+  },
+  "score_buckets": {
+    "75-100": {
+      "count": 19,
+      "win_rate": 31.6
+    },
+    "60-74": {
+      "count": 7,
+      "win_rate": 28.6
+    },
+    "50-59": {
+      "count": 0,
+      "win_rate": 0.0
+    }
+  },
+  "pavp_override_stats": {
+    "count": 0,
+    "wins": 0,
+    "losses": 0,
+    "win_rate": 0.0,
+    "avg_confidence": 0.0,
+    "expectancy_r": -1.0
+  },
+  "cvd_move_ratio_lt05": {
+    "count": 14,
+    "wins": 4,
+    "losses": 10,
+    "win_rate": 28.6,
+    "avg_confidence": 80.0,
+    "expectancy_r": -0.143
+  },
+  "exhaustion_blocks": 198,
+  "no_trade_filter_effectiveness": {
+    "engine_no_trade": 588,
+    "filter_rejected": 177,
+    "exhaustion_blocks": 198,
+    "total_blocked": 765,
+    "pct_of_total_bars": 76.5
+  },
+  "active_filters": {
+    "skip_grade_c": true,
+    "skip_breakout": true,
+    "skip_opposing_mom": true,
+    "min_conf_A": 80.0,
+    "min_conf_B": 65.0
+  },
+  "calibration_table": {
+    "A": 31.6,
+    "B": 28.6,
+    "C": 0.0,
+    "NONE": 0.0
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "timestamp": "ISO_STRING",
+  "symbol": "STRING",
+
+  "pavp": {
+    "position": "ABOVE_VAH | BELOW_VAL | INSIDE_VALUE_AREA",
+    "poc_distance": "NUMBER",
+    "value_area_width": "NUMBER"
+  },
+
+  "macd": {
+    "histogram": "NUMBER",
+    "histogram_direction": "RISING | FALLING | FLAT",
+    "zero_line_position": "ABOVE | BELOW"
+  },
+
+  "trend_speed": {
+    "speed": "NUMBER",
+    "state": "EXPANDING | CONTRACTING | FLAT"
+  },
+
+  "zigzag": {
+    "structure": "BULLISH | BEARISH | NEUTRAL",
+    "bos": "TRUE | FALSE"
+  },
+
+  "cvd": {
+    "pressure": "BUY | SELL | NEUTRAL",
+    "divergence": "NONE | BULLISH | BEARISH"
+  },
+
+  "atr": {
+    "value": "NUMBER",
+    "regime": "LOW | NORMAL | HIGH"
+  },
+
+  "price": {
+    "open": "NUMBER",
+    "high": "NUMBER",
+    "low": "NUMBER",
+    "close": "NUMBER"
+  }
+}

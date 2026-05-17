@@ -1,0 +1,31 @@
+LONG ENTRY
+ALL MUST ALIGN:
+
+1. Score ≥ 75
+2. Price at:
+   - POC reclaim OR VAH breakout retest OR higher low near VAL
+3. Trend Speed:
+   - bullish AND accelerating
+4. MACD:
+   - histogram expanding upward
+5. Structure:
+   - HH/HL intact
+6. CVD:
+   - buying pressure or confirmation
+7. ATR:
+   - NOT in extreme spike zone
+
+SHORT ENTRY
+1. Score ≤ -75
+2. Price at:
+   - POC rejection OR VAL breakdown retest OR lower high near VAH
+3. Trend Speed:
+   - bearish AND accelerating
+4. MACD:
+   - histogram expanding downward
+5. Structure:
+   - LH/LL intact
+6. CVD:
+   - selling pressure
+7. ATR:
+   - NOT extreme spike exhaustion

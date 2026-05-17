@@ -1,0 +1,17 @@
+LONG EXIT
+Exit if ANY:
+- Score drops below 50
+- Trend speed flips bearish
+- MACD histogram weakens or reverses
+- Break below POC
+- Zigzag breaks HL structure
+- ATR spike exhaustion event
+
+SHORT EXIT
+Exit if ANY:
+- Score rises above -50
+- Trend speed flips bullish
+- MACD flips upward
+- Break above POC
+- Structure breaks LL
+- Volatility spike (ATR exhaustion)

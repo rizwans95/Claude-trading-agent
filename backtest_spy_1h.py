@@ -1,6 +1,6 @@
 """
 backtest_spy_1h.py
------------------------------------------------------------
+═══════════════════════════════════════════════════════════
 SPY 1-hour validation test.
 
 Uses Yahoo Finance 1h data (2 years available).
@@ -11,49 +11,38 @@ NY session in UTC:
   14:00 = 10:00am ET (NY open + first hour peak)
   15:00 = 11:00am ET (mid-morning)
   19:00 = 3:00pm ET  (power hour)
------------------------------------------------------------
+═══════════════════════════════════════════════════════════
 """
 
 import sys, os, json, time, warnings
 import numpy as np
 import pandas as pd
 warnings.filterwarnings("ignore")
-
-# SSL patch -- Windows / Python 3.14 TLS CA chain issue
-import requests as _req
-_orig_get = _req.get
-def _get_no_verify(url, **kw):
-    kw.setdefault("verify", False)
-    return _orig_get(url, **kw)
-_req.get = _get_no_verify
-_root = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_root, "backtesting"))
-sys.path.insert(0, os.path.join(_root, "phase 2 files - python backend"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from indicator_engine      import compute_pavp, compute_trend_speed, compute_atr
 from volume_profile_engine import compute_volume_intelligence, compute_cvd_triangles
 from wme_sweep_engine      import compute_wme_signal, get_wme_confidence_modifier
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # CONSTANTS
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 WINDOW            = 80    # fewer bars needed on 1h
 MAX_BARS_IN_TRADE = 20    # 20 x 1h = ~3 trading days max
 COOLDOWN          = 10    # 10 x 1h = 10 hours cooldown
 STARTING_CAPITAL  = 1000.0
 RISK_PER_TRADE    = 0.02
-FETCH_WINDOW      = "730d"  # 2-year lookback label (730 calendar days)
 
 # NY session hours in UTC for 1h bars
 # 13=9am, 14=10am, 15=11am, 19=3pm ET
-HOURS_G = [13, 14, 15, 19]   # G strategy -- broader
-HOURS_L = [13, 14]            # L strategy -- tightest (open + first hour only)
+HOURS_G = [13, 14, 15, 19]   # G strategy — broader
+HOURS_L = [13, 14]            # L strategy — tightest (open + first hour only)
 
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # DATA FETCH
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 def fetch_spy_1h():
     try:
@@ -61,22 +50,11 @@ def fetch_spy_1h():
     except ImportError:
         raise RuntimeError("yfinance not installed. Run: pip install yfinance")
 
-    # SSL bypass for Windows / Python 3.14 CA chain issue
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
-
-    # curl_cffi browser-impersonation session (bundled with yfinance >=1.0)
-    try:
-        from curl_cffi import requests as cffi_req
-        _session = cffi_req.Session(impersonate="chrome110", verify=False)
-    except ImportError:
-        _session = None
-
-    print(f"  Fetching SPY 1h from Yahoo Finance ({FETCH_WINDOW} window)...")
+    print("  Fetching SPY 1h from Yahoo Finance (2-year period)...")
 
     try:
-        tk = yf.Ticker("SPY", session=_session) if _session else yf.Ticker("SPY")
-        df = tk.history(period="2y", interval="1h", auto_adjust=True)
+        ticker = yf.Ticker("SPY")
+        df     = ticker.history(period="730d", interval="1h", auto_adjust=True)
     except Exception as e:
         raise RuntimeError(f"Yahoo fetch failed: {e}")
 
@@ -97,9 +75,9 @@ def fetch_spy_1h():
     return df
 
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # OUTCOME EVALUATOR
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 def evaluate_outcome(direction, entry_price, stop_loss, exit_targets,
                      future_highs, future_lows, max_bars):
@@ -151,9 +129,9 @@ def evaluate_outcome(direction, entry_price, stop_loss, exit_targets,
             "bars_to_outcome":max_bars,"r_multiple":r}
 
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # CONFIG RUNNER
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 def run_config(df, config_name, allowed_hours, allowed_grades=None):
     n      = len(df)
@@ -202,7 +180,7 @@ def run_config(df, config_name, allowed_hours, allowed_grades=None):
             no_trade_count += 1
             continue
 
-        # SPY is long-biased -- block shorts outside power hour
+        # SPY is long-biased — block shorts outside power hour
         # Only allow shorts at 19 UTC (3pm ET power hour)
         if direction == "SHORT" and hour_now != 19:
             no_trade_count += 1
@@ -276,9 +254,9 @@ def run_config(df, config_name, allowed_hours, allowed_grades=None):
     return trade_log, total_signals, no_trade_count
 
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # REPORT + PNL
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 def build_report(trade_log, config_name, total_bars, total_signals, no_trade):
     df = pd.DataFrame(trade_log)
@@ -354,14 +332,14 @@ def simulate_pnl(trade_log):
     }
 
 
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 # MAIN
-# ---------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────
 
 def main():
     print(f"\n{'='*60}")
     print(f"  SPY 1H VALIDATION TEST")
-    print(f"  Yahoo Finance -- 2 year period")
+    print(f"  Yahoo Finance — 2 year period")
     print(f"  G strategy: hours {HOURS_G}")
     print(f"  L strategy: hours {HOURS_L}")
     print(f"{'='*60}")
@@ -391,7 +369,7 @@ def main():
         with open(f"{name}_report.json","w") as f:
             json.dump(report, f, indent=2)
 
-    # -- Summary table -------------------------------------------
+    # ── Summary table ─────────────────────────────────────────
     print(f"\n{'='*72}")
     print(f"  SPY 1H RESULTS  (${STARTING_CAPITAL:,.0f} start, {RISK_PER_TRADE*100:.0f}% risk)")
     print(f"{'='*72}")
@@ -414,8 +392,8 @@ def main():
 
     # Compare to 15m SPY result
     print(f"\n  Comparison to 15m SPY:")
-    print(f"  SPY_15m_G: 7 trades  71.4% WR  +0.284R  $1,039 (+3.9%) <- 60d only")
-    print(f"  SPY_15m_L: 7 trades  71.4% WR  +0.288R  $1,039 (+3.9%) <- 60d only")
+    print(f"  SPY_15m_G: 7 trades  71.4% WR  +0.284R  $1,039 (+3.9%) ← 60d only")
+    print(f"  SPY_15m_L: 7 trades  71.4% WR  +0.288R  $1,039 (+3.9%) ← 60d only")
 
     print(f"\n  Breakeven: 35.7% at 1.8R")
     print(f"  Time: {time.time()-t0:.1f}s")

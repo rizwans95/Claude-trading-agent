@@ -1,225 +1,70 @@
-EXECUTION_ENGINE_V2
-═══════════════════════════════════════════════════════════
+EXECUTION ENGINE V2
 
-Central decision fusion system.
+This system converts structured indicator inputs into trading decisions.
 
-Combines inputs from all six indicators after enrichment
-by the Python signal layer, then produces a final trade
-decision with full score breakdown and reasoning.
+────────────────────────────
+INPUT FORMAT
+────────────────────────────
 
-═══════════════════════════════════════════════════════════
-INPUTS EXPECTED
-═══════════════════════════════════════════════════════════
+The agent receives:
 
-Fully populated signal_format.json containing:
+- PAVP state (above VAH / below VAL / inside VA)
+- MACD state (momentum up/down/flat)
+- Trend Speed state (expansion / contraction)
+- ZigZag structure state (bull / bear / break)
+- CVD state (buy pressure / sell pressure / divergence)
+- ATR state (low / normal / high volatility)
 
-  pavp         → poc, vah, val, poc_distance_pct,
-                 value_area_position, value_area_width_pct
-  zigzag       → structure, bos_signal, direction,
-                 last_swing_high, last_swing_low, leg_bar_count
-  macd         → macd_line, signal_line, histogram,
-                 histogram_state, zero_line_position, signal_cross
-  trend_speed  → direction, regime, speed_normalized,
-                 price_vs_ema, wave_analysis.*
-  cvd          → cvd_direction, divergence.*, aggression.*,
-                 cost.*, absorption.type, delta_implied.*,
-                 ma.ma_bias
-  atr          → volatility_state, percentile_rank,
-                 compression, expansion, atr_pct_of_price
+────────────────────────────
+PROCESS FLOW
+────────────────────────────
 
-═══════════════════════════════════════════════════════════
-STEP 1 — REGIME DETECTION (runs before scoring)
-═══════════════════════════════════════════════════════════
+STEP 1: STRUCTURE FILTER
+- Use ZigZag as primary directional bias
+- If structure is unclear → NO TRADE
 
-Classify active regime using combined indicator state:
+STEP 2: LOCATION FILTER
+- Use PAVP (VAH / VAL / POC)
+- Reject mid-value area trades unless strong momentum exists
 
-TRENDING_UP:
-  zigzag.structure = BULLISH
-  pavp.value_area_position = ABOVE_VA
-  trend_speed.direction = BULLISH + regime = EXPANSION
-  macd.histogram_state = BULLISH_ACCELERATING
-  cvd.cvd_direction = BUYING
+STEP 3: MOMENTUM CONFIRMATION
+- MACD + Trend Speed must agree with structure
+- If conflict → reduce confidence score
 
-TRENDING_DOWN:
-  zigzag.structure = BEARISH
-  pavp.value_area_position = BELOW_VA
-  trend_speed.direction = BEARISH + regime = EXPANSION
-  macd.histogram_state = BEARISH_ACCELERATING
-  cvd.cvd_direction = SELLING
+STEP 4: ORDER FLOW VALIDATION
+- CVD must confirm direction OR show acceptable absorption
+- Divergence → reduce score heavily
 
-RANGING:
-  pavp.value_area_position = INSIDE_VA
-  zigzag.structure = NEUTRAL or alternating
-  trend_speed.regime = CONSOLIDATION
-  macd crossing frequently
+STEP 5: VOLATILITY FILTER
+- ATR low → reject breakout trades
+- ATR high → require structure confirmation
 
-BREAKOUT:
-  atr.compression = true → now expanding
-  pavp breaking VAH or VAL
-  trend_speed.current_ratio_avg > 1.2
-  cvd confirms directional flow
+────────────────────────────
+SCORING SYSTEM
+────────────────────────────
 
-REVERSAL / EXHAUSTION:
-  trend_speed.regime = EXHAUSTION
-  cvd divergence (medium or large) opposing price
-  macd.histogram_state = BULLISH_DECELERATING or BEARISH_RECOVERING
-  price far from poc (large poc_distance_pct)
+Start score = 5.0
 
-If regime is UNCERTAIN (< 2 indicators agree):
-  → Apply -2.0 confidence penalty
-  → Bias toward NO TRADE
+Adjust:
 
-═══════════════════════════════════════════════════════════
-STEP 2 — STRUCTURE FILTER (highest priority layer)
-═══════════════════════════════════════════════════════════
++ Structure alignment = +2.0
++ Momentum alignment = +1.5
++ Order flow confirmation = +1.5
++ Clean location (VA edges / POC) = +1.0
 
-Use: zigzag.structure, zigzag.bos_signal, pavp.*
+- Structure conflict = -2.0
+- CVD divergence = -2.0
+- Chop zone = -1.5
+- Low volatility trap = -1.0
 
-Rules:
-  BULLISH structure + BOS_UP + ABOVE_VA  → strong long bias  (+25)
-  BEARISH structure + BOS_DOWN + BELOW_VA → strong short bias (-25, short)
-  Structure NEUTRAL                       → NO TRADE bias
-  ZigZag and PAVP conflict                → NO TRADE or heavy penalty (-15)
-  bos_signal = NONE + structure unclear   → reduce confidence
+────────────────────────────
+OUTPUT
+────────────────────────────
 
-═══════════════════════════════════════════════════════════
-STEP 3 — MOMENTUM CONFIRMATION
-═══════════════════════════════════════════════════════════
+Return:
 
-Use: trend_speed.*, macd.*
-
-Trend Speed rules:
-  regime EXPANSION + direction aligned    → +10
-  current_ratio_avg > 1.2                 → +5 bonus (accelerating)
-  current_ratio_avg < 0.4                 → -5 (exhaustion)
-  regime EXHAUSTION                       → -5 regardless of direction
-  price_vs_ema = CROSSING                 → -3 (transition uncertainty)
-  dominance opposing structure            → -3
-
-MACD rules:
-  BULLISH_ACCELERATING + ABOVE zero       → +5
-  BULLISH_ACCELERATING + BELOW zero       → +3 (building)
-  BULLISH_DECELERATING                    → +1 (weakening)
-  BEARISH_RECOVERING                      → -1
-  BEARISH_ACCELERATING + BELOW zero       → -5
-  signal_cross in direction               → +3 bonus
-  signal_cross opposing                   → -3
-
-═══════════════════════════════════════════════════════════
-STEP 4 — ORDER FLOW VALIDATION
-═══════════════════════════════════════════════════════════
-
-Use: cvd.*
-
-CVD direction:
-  BUYING confirms long bias               → +10
-  SELLING confirms short bias             → +10
-  NEUTRAL                                 → 0
-  opposing direction                      → treat as divergence
-
-Divergence (scale-weighted):
-  divergence.large  opposing              → -15
-  divergence.medium opposing              → -10
-  divergence.small  opposing              → -5
-
-Absorption:
-  BUY_ABSORPTION  (buyers win volume, price drops) → +5 long confirm
-  SELL_ABSORPTION (sellers win, price rises)       → +5 short confirm
-
-Cost state:
-  VERY_HIGH + aligned direction           → +5
-  HIGH + aligned                          → +2
-  VERY_LOW                                → -5 (weak move)
-
-Delta implied:
-  move_ratio > 1.5                        → -5 (overextended)
-  move_ratio < 0.5                        → -3 (suppressed, uncertain)
-
-MA bias:
-  cvd.ma.ma_bias = ABOVE (long)           → +2
-  cvd.ma.ma_bias = BELOW (short)          → +2
-  cvd.ma.ma_bias = CROSSING               → 0
-
-═══════════════════════════════════════════════════════════
-STEP 5 — LOCATION FILTER (PAVP)
-═══════════════════════════════════════════════════════════
-
-value_area_position:
-  ABOVE_VA → bullish continuation context       → +5 to +10
-  BELOW_VA → bearish continuation context       → +5 to +10
-  INSIDE_VA → chop zone                         → -10
-
-poc_distance_pct:
-  Near 0% (within 0.1%) → POC magnet active     → -3
-  > 1.5% away from POC  → clear of magnet zone  → 0
-
-value_area_width_pct:
-  Narrow VA (< 30%)     → compression, breakout risk → note only
-  Wide VA  (> 70%)      → extended range, exhaustion risk → -2
-
-═══════════════════════════════════════════════════════════
-STEP 6 — VOLATILITY FILTER (ATR — direction-neutral)
-═══════════════════════════════════════════════════════════
-
-volatility_state:
-  HIGH + expansion = true  → valid continuation context, widen stop note
-  LOW  + compression = true → breakout trades BLOCKED (-10 if breakout type)
-  NORMAL               → no adjustment
-
-percentile_rank:
-  > 90  → extreme volatility, reduce position size note
-  < 10  → very low volatility, fakeout risk on breakouts
-
-compression = true alone → breakout readiness flag (no score change)
-expansion   = true alone → momentum environment confirmed
-
-ATR never adds or removes directional bias.
-
-═══════════════════════════════════════════════════════════
-SCORING SUMMARY
-═══════════════════════════════════════════════════════════
-
-Base score: 50
-
-Layer              Max Add    Max Subtract
-──────────────────────────────────────────
-Structure          +25        -25
-Location           +10        -15
-Momentum           +20        -15
-Order Flow         +15        -20
-Volatility          0         -10
-──────────────────────────────────────────
-Total range:       0 – 100
-
-FINAL DECISION:
-  ≥ 75  → LONG/SHORT SETUP (A)
-  60–74 → VALID SETUP (B)
-  50–59 → WEAK SETUP (C)
-  < 50  → NO TRADE
-
-═══════════════════════════════════════════════════════════
-OUTPUT FORMAT
-═══════════════════════════════════════════════════════════
-
-Return EXACTLY per output_schema.txt:
-
-1. Direction:       LONG / SHORT / NO TRADE
-2. Confidence:      0–100
-3. Entry Grade:     A / B / C / NONE
-4. Regime:          active regime classification
-5. Score Breakdown: structure / location / momentum /
-                    order_flow / volatility / total
-6. Reasoning:       one sentence per layer
-7. Key Conflicts:   any opposing signals noted
-8. Invalidation:    specific condition that breaks the trade
-
-═══════════════════════════════════════════════════════════
-SELF-IMPROVEMENT LINK
-═══════════════════════════════════════════════════════════
-
-This engine does NOT learn directly.
-
-Updates flow ONLY through:
-  feedback_system.txt    → error classification
-  adaptive_weighting.txt → weight adjustments
-  trade_memory_log.txt   → performance history
+- Direction: LONG / SHORT / NO TRADE
+- Confidence: 0–10
+- Setup Grade: A / B / C / NONE
+- Reasoning (structured per indicator)
+- Risk State (LOW / MEDIUM / HIGH)

@@ -1,0 +1,67 @@
+OUTPUT FORMAT (MANDATORY)
+═══════════════════════════════════════════════════════════
+
+Return EXACTLY this structure as valid JSON:
+
+{
+  "bias":        "LONG | SHORT | NO TRADE",
+  "confidence":  0–100,
+  "setup_grade": "A | B | C | NONE",
+  "risk_state":  "LOW | MEDIUM | HIGH",
+  "regime":      "TRENDING_UP | TRENDING_DOWN | RANGING | BREAKOUT | REVERSAL | UNCERTAIN",
+
+  "score_breakdown": {
+    "structure":  0,
+    "location":   0,
+    "momentum":   0,
+    "order_flow": 0,
+    "volatility": 0,
+    "total":      0
+  },
+
+  "reasoning": {
+    "structure":  "one sentence — zigzag + pavp state",
+    "location":   "one sentence — VA position + POC distance",
+    "momentum":   "one sentence — trend speed regime + MACD state",
+    "order_flow": "one sentence — CVD direction + divergence + cost",
+    "volatility": "one sentence — ATR state + compression/expansion"
+  },
+
+  "key_conflicts": [
+    "list any signals opposing the primary bias"
+  ],
+
+  "entry_logic":  "specific condition required to trigger entry",
+  "invalidation": "specific condition that breaks this trade"
+}
+
+═══════════════════════════════════════════════════════════
+GRADE THRESHOLDS
+═══════════════════════════════════════════════════════════
+
+  A  → score ≥ 75   (strong confluence, high confidence)
+  B  → score 60–74  (valid setup, proceed with caution)
+  C  → score 50–59  (weak setup, reduced size only)
+  NONE → score < 50 (NO TRADE)
+
+═══════════════════════════════════════════════════════════
+RISK STATE RULES
+═══════════════════════════════════════════════════════════
+
+  LOW    → A grade + regime stable + no CVD divergence + ATR NORMAL
+  MEDIUM → B grade OR any single conflict present
+  HIGH   → C grade OR CVD divergence active OR ATR HIGH + expansion
+           OR regime UNCERTAIN OR trend_speed EXHAUSTION
+
+═══════════════════════════════════════════════════════════
+INVALIDATION MUST REFERENCE SPECIFIC LEVELS
+═══════════════════════════════════════════════════════════
+
+For LONG:
+  "Invalidated if price closes below [last_swing_low] or breaks below VAL [val_price]"
+
+For SHORT:
+  "Invalidated if price closes above [last_swing_high] or reclaims VAH [vah_price]"
+
+For NO TRADE:
+  "No trade. Re-evaluate when [specific condition] resolves."

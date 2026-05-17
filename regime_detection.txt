@@ -1,0 +1,105 @@
+REGIME_DETECTION_V2
+
+This module classifies current market conditions into a trading regime.
+
+It does NOT generate trades.
+It ONLY defines context for decision-making layers.
+
+────────────────────────────────────────
+PRIMARY REGIME CLASSES
+────────────────────────────────────────
+
+1. TRENDING UP
+2. TRENDING DOWN
+3. RANGING / CHOP
+4. BREAKOUT / EXPANSION
+5. REVERSAL / EXHAUSTION
+
+Only ONE regime can be active at a time.
+
+────────────────────────────────────────
+INPUTS USED
+────────────────────────────────────────
+
+- Pivot Anchored Volume Profile (POC / VAH / VAL / acceptance)
+- ZigZag Structure (higher highs / lower lows / BOS)
+- Trend Speed Analyzer (momentum acceleration / deceleration)
+- MACD (histogram expansion / contraction)
+- CVD IQ (buy/sell pressure + divergence)
+- ATR (volatility compression / expansion)
+
+────────────────────────────────────────
+REGIME CLASSIFICATION RULES
+────────────────────────────────────────
+
+TRENDING UP:
+- Higher highs + higher lows (ZigZag)
+- Price holding above VAH or above POC
+- Trend Speed > 0 and increasing
+- MACD histogram positive and expanding
+- CVD supports buying pressure
+
+TRENDING DOWN:
+- Lower highs + lower lows
+- Price below VAL or below POC
+- Trend Speed < 0 and decreasing
+- MACD histogram negative and expanding
+- CVD supports selling pressure
+
+RANGING / CHOP:
+- Price oscillating inside Value Area
+- ZigZag alternating structure without BOS
+- Trend Speed flattening near zero
+- MACD crossing frequently with no follow-through
+- CVD neutral or divergent
+
+BREAKOUT / EXPANSION:
+- ATR expanding after compression
+- Price breaking VAH or VAL with momentum
+- Trend Speed sharply increasing
+- Volume expansion (PAVP shift / acceptance shift)
+- CVD confirms directional breakout
+
+REVERSAL / EXHAUSTION:
+- Extreme move away from POC
+- CVD divergence against price
+- Trend Speed spike then flatten or reverse
+- MACD weakening while price extends
+- Failure to hold VA boundaries
+
+────────────────────────────────────────
+REGIME TRANSITION RULES
+────────────────────────────────────────
+
+Shift regime ONLY when:
+- At least 2 independent indicators confirm change
+OR
+- PAVP boundary shift occurs (acceptance change)
+OR
+- ZigZag structure break occurs (BOS / CHoCH)
+
+No single indicator can force a regime change alone.
+
+────────────────────────────────────────
+OUTPUT FORMAT
+────────────────────────────────────────
+
+Return:
+
+1. Active Regime (one of 5)
+2. Confidence (0–10)
+3. Supporting Evidence:
+   - Structure (ZigZag)
+   - Location (PAVP)
+   - Momentum (Trend Speed + MACD)
+   - Order Flow (CVD)
+   - Volatility (ATR)
+4. Regime Stability:
+   - Stable / Transitioning / Uncertain
+
+────────────────────────────────────────
+USAGE RULE
+────────────────────────────────────────
+
+All execution decisions MUST reference this regime layer first.
+If regime is unclear → reduce all trade confidence by at least 2 points.

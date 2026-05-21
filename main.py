@@ -392,26 +392,36 @@ def live_latest_signal(
               "1h":"60","2h":"120","4h":"240","1d":"D"}
     bybit_interval = tf_map.get(timeframe, "15")
 
-    # Fetch from Bybit
+    # Fetch from KuCoin Futures (Bybit blocked on VPS IPs)
+    # KuCoin symbol map
+    kc_sym_map = {"BTCUSDT": "XBTUSDTM", "ETHUSDT": "ETHUSDTM"}
+    kc_sym = kc_sym_map.get(symbol, symbol)
+    kc_int_map = {"1m":"1","3m":"3","5m":"5","15m":"15","30m":"30",
+                  "1h":"60","2h":"120","4h":"240","1d":"1440"}
+    kc_interval = int(kc_int_map.get(timeframe, "15"))
+
     try:
-        url    = "https://api.bybit.com/v5/market/kline"
+        import time as _time
+        end_ms   = int(_time.time() * 1000)
+        start_ms = end_ms - (bars * kc_interval * 60 * 1000)
+        url    = "https://api-futures.kucoin.com/api/v1/kline/query"
         params = {
-            "category": "linear",
-            "symbol":   symbol,
-            "interval": bybit_interval,
-            "limit":    bars,
+            "symbol":      kc_sym,
+            "granularity": kc_interval,
+            "from":        start_ms,
+            "to":          end_ms,
         }
-        r = req.get(url, params=params, timeout=10, verify=False)
+        r = req.get(url, params=params, timeout=15, verify=False)
         r.raise_for_status()
         payload = r.json()
 
-        if payload.get("retCode") != 0:
+        if payload.get("code") != "200000":
             raise HTTPException(status_code=502,
-                detail=f"Bybit error: {payload.get('retMsg')}")
+                detail=f"KuCoin error: {payload.get('msg')}")
 
-        raw = payload["result"]["list"]
+        raw = payload.get("data", [])
         if not raw:
-            raise HTTPException(status_code=502, detail="No data from Bybit")
+            raise HTTPException(status_code=502, detail="No data from KuCoin")
 
         df = pd.DataFrame(raw, columns=[
             "open_time","open","high","low","close","volume","turnover"])
@@ -724,7 +734,7 @@ def trade_review():
     wins   = (closed["status"] == "WIN").sum()
     losses = (closed["status"] == "LOSS").sum()
     total  = wins + losses
-    wr     = round(float(wins)/int(total)*100, 1) if total else 0.0
+    wr     = round(wins/total*100, 1) if total else 0.0
 
     try:
         avg_r     = round(pd.to_numeric(closed["r_multiple"], errors="coerce").mean(), 3)
@@ -742,7 +752,7 @@ def trade_review():
             "closed":   n,
             "wins":     int(w),
             "losses":   int(n-w),
-            "win_rate": round(float(w)/n*100,1) if n else 0.0,
+            "win_rate": round(w/n*100,1) if n else 0.0,
             "avg_r":    round(float(r),3) if n and not pd.isna(r) else 0.0,
         }
 
@@ -841,30 +851,21 @@ def trade_review():
                 "action":  "Review exit targets — consider holding to TP2/TP3 more often"
             })
 
-    # Recursively convert all numpy/pandas types to plain Python for JSON safety
-    import math, numpy as np
-    def _sanitize(obj):
-        if isinstance(obj, dict):
-            return {k: _sanitize(v) for k, v in obj.items()}
-        if isinstance(obj, list):
-            return [_sanitize(v) for v in obj]
-        if isinstance(obj, (np.integer,)):
-            return int(obj)
-        if isinstance(obj, (np.floating,)):
-            f = float(obj)
-            return None if (math.isnan(f) or math.isinf(f)) else f
-        if isinstance(obj, (np.bool_,)):
-            return bool(obj)
-        if isinstance(obj, float):
-            return None if (math.isnan(obj) or math.isinf(obj)) else obj
-        return obj
+    # Sanitize any NaN values before returning
+    import math
+    def _clean(v):
+        if v is None: return None
+        try:
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else v
+        except: return v
 
-    result = {
+    return {
         "total_signals":    len(df),
         "taken":            len(taken),
         "skipped":          len(skipped),
         "open":             len(taken[taken["status"]=="OPEN"]),
-        "closed":           int(total),
+        "closed":           total,
         "wins":             int(wins),
         "losses":           int(losses),
         "win_rate":         wr,
@@ -880,12 +881,11 @@ def trade_review():
         "improvement_signals": improvements,
         "data_quality": {
             "min_trades_for_analysis": 10,
-            "sufficient_data":         bool(total >= 10),
+            "sufficient_data": total >= 10,
             "note": "Improvement signals require 10+ closed trades" if total < 10
                      else f"Based on {total} closed trades"
         }
     }
-    return _sanitize(result)
 
 
 @app.post("/trade/close")

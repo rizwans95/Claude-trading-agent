@@ -202,7 +202,7 @@ def get_current_price(config, kucoin_symbol):
 # ORDER MANAGEMENT
 # ─────────────────────────────────────────────────────────────
 
-def place_limit_order(config, kucoin_symbol, side, qty, price, reduce_only=False):
+def place_limit_order(config, kucoin_symbol, side, qty, price, reduce_only=False, leverage=10):
     """
     Place a limit order on KuCoin futures.
     side: 'buy' or 'sell'
@@ -219,6 +219,7 @@ def place_limit_order(config, kucoin_symbol, side, qty, price, reduce_only=False
         "size":       int(qty),
         "timeInForce": "GTC",
         "reduceOnly": reduce_only,
+        "leverage":   str(leverage),
     }
     result = api_post(config, "/api/v1/orders", body)
     return result.get("orderId")

@@ -473,16 +473,61 @@ def live_latest_signal(
     except Exception:
         wme_signal = {}
 
+    # KuCoin balance + position sizing
+    balance_usdt  = 1000.0
+    balance_source = "fallback"
+    try:
+        from kucoin_balance import get_balance
+        bal_info      = get_balance()
+        balance_usdt  = bal_info["balance_usdt"]
+        balance_source = bal_info["source"]
+    except Exception:
+        pass
+
+    # Position sizing
+    risk_dollars = balance_usdt * 0.02
+    positions    = {}
+    try:
+        from live_signal_monitor import calculate_positions
+        d   = decision
+        bias= d.get("bias","")
+        sb  = d.get("score_breakdown",{})
+        atr_val = snapshot.get("atr",{}).get("atr_value", float(latest["close"]) * 0.002)
+        ep  = float(latest["close"])
+        if "LONG" in bias:
+            sl = round(ep - atr_val * 3.0, 4)
+        elif "SHORT" in bias:
+            sl = round(ep + atr_val * 3.0, 4)
+        else:
+            sl = round(ep * 0.98, 4)
+        positions = calculate_positions(ep, sl, balance_usdt, symbol)
+        positions["stop_price"] = sl
+    except Exception as e:
+        positions = {"error": str(e)}
+
+    # Exit targets
+    targets = []
+    try:
+        pavp_data = snapshot.get("pavp", {})
+        targets = [
+            {"level": "PAVP POC", "price": round(float(pavp_data.get("poc", 0)), 4)},
+            {"level": "PAVP VAH", "price": round(float(pavp_data.get("vah", 0)), 4)},
+            {"level": "PAVP VAL", "price": round(float(pavp_data.get("val", 0)), 4)},
+        ]
+        targets = [t for t in targets if t["price"] > 0]
+    except Exception:
+        pass
+
     return {
-        "symbol":        symbol,
-        "timeframe":     timeframe,
-        "timestamp":     str(latest["time"]),
-        "price":         float(latest["close"]),
-        "bars_fetched":  len(df),
-        "utc_hour":      utc_hour,
-        "in_session":    in_session,
-        "session_hours": session_hours,
-        "decision":      decision,
+        "symbol":         symbol,
+        "timeframe":      timeframe,
+        "timestamp":      str(latest["time"]),
+        "price":          float(latest["close"]),
+        "bars_fetched":   len(df),
+        "utc_hour":       utc_hour,
+        "in_session":     in_session,
+        "session_hours":  session_hours,
+        "decision":       decision,
         "wme": {
             "long_entry":        wme_signal.get("long_entry",  False),
             "short_entry":       wme_signal.get("short_entry", False),
@@ -495,4 +540,11 @@ def live_latest_signal(
         "key_conflicts":   decision.get("key_conflicts",   []),
         "entry_logic":     decision.get("entry_logic",     ""),
         "invalidation":    decision.get("invalidation",    ""),
+        "balance": {
+            "usdt":   balance_usdt,
+            "source": balance_source,
+            "risk_2pct": round(risk_dollars, 2),
+        },
+        "positions":  positions,
+        "targets":    targets,
     }

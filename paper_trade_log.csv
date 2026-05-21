@@ -1,0 +1,4 @@
+timestamp,utc_hour,strategy,symbol,timeframe,mode,in_session,has_signal,direction,confidence,grade,valid_trade,wme_long,wme_short,wme_speed,wme_htf_bull,wme_sweep_bars,cvd_primary,in_lvn,in_hvn,entry_price,pavp_poc,pavp_vah,pavp_val,bull_val,bear_vah,price_1h,price_4h,price_24h,outcome_1h,outcome_4h,outcome_24h,notes
+2026-05-17T07:46:07.360847+00:00,7,BTC_G,BTCUSDT,15m,G,True,False,NONE,48.6,C,False,False,False,0.237,False,68,NONE,False,False,78136.7,78218.168,78284.408,78072.44,78018.84,78091.306,,,,,,,
+2026-05-17T07:46:07.699830+00:00,7,BTC_L,BTCUSDT,15m,L,True,False,NONE,48.6,C,False,False,False,0.237,False,68,NONE,False,False,78136.7,78218.168,78284.408,78072.44,78018.84,78091.306,,,,,,,
+2026-05-17T07:46:08.034632+00:00,7,ETH_G,ETHUSDT,15m,G,True,False,NONE,47.4,C,False,False,False,0.1629,False,13,NONE,False,False,2184.99,2180.0484,2182.5908,2174.6004,2181.5826,2184.5372,,,,,,,

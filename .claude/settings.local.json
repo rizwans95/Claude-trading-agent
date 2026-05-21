@@ -12,7 +12,27 @@
       "Bash(python \"..\\\\backtesting\\\\backtest_runner.py\")",
       "Bash(set \"PYTHONPATH=C:\\\\Users\\\\riz_e\\\\Desktop\\\\Computer Agent Master Files\\\\TRADING AGENT V2\\\\phase 2 files - python backend\")",
       "Bash(python backtest_runner.py)",
-      "Bash(python -c \"import sys; sys.path.insert\\(0,'C:\\\\\\\\Users\\\\\\\\riz_e\\\\\\\\Desktop\\\\\\\\Computer Agent Master Files\\\\\\\\TRADING AGENT V2\\\\\\\\phase 2 files - python backend'\\); import indicator_engine; print\\('OK'\\)\")"
+      "Bash(python -c \"import sys; sys.path.insert\\(0,'C:\\\\\\\\Users\\\\\\\\riz_e\\\\\\\\Desktop\\\\\\\\Computer Agent Master Files\\\\\\\\TRADING AGENT V2\\\\\\\\phase 2 files - python backend'\\); import indicator_engine; print\\('OK'\\)\")",
+      "Bash(python backtest_eth_validation.py)",
+      "Bash(py --version)",
+      "Bash(where python*)",
+      "Bash(py backtest_eth_validation.py)",
+      "Bash(py backtest_gold.py)",
+      "Bash(py paper_trade_logger.py --mode scan)",
+      "Bash(py -c ' *)",
+      "Bash(py backtest_wme_cvd_comparison.py)",
+      "Bash(dir \"C:\\\\Users\\\\riz_e\\\\Downloads\\\\main.py\")",
+      "Bash(dir \"C:\\\\Users\\\\riz_e\\\\Desktop\\\\main.py\")",
+      "Bash(dir \"C:\\\\Users\\\\riz_e\\\\Desktop\\\\Computer Agent Master Files\\\\TRADING AGENT V2\\\\main.py\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e\\\\Downloads' | Sort-Object LastWriteTime -Descending | Select-Object -First 10 | Format-Table Name, LastWriteTime\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e\\\\Downloads' -Recurse -Filter 'main.py' | Format-Table FullName, LastWriteTime\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e\\\\Desktop' -Recurse -Filter 'main.py' | Format-Table FullName, LastWriteTime\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e' -Recurse -Filter 'main.py' | Sort-Object LastWriteTime -Descending | Format-Table FullName, LastWriteTime\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e\\\\Desktop\\\\Computer Agent Master Files\\\\TRADING AGENT V2\\\\.claude' -Recurse -Filter 'main.py' | Sort-Object LastWriteTime -Descending | Select-Object FullName, LastWriteTime, Length | Format-Table -AutoSize\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\riz_e\\\\AppData\\\\Roaming\\\\Claude' -Recurse -Filter 'main.py' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object FullName, LastWriteTime, Length | Format-Table -AutoSize\")",
+      "Bash(py -m uvicorn main:app --reload --port 8000)",
+      "Bash(powershell -Command \"Copy-Item 'C:\\\\Users\\\\riz_e\\\\Downloads\\\\kucoin_balance.py' 'C:\\\\Users\\\\riz_e\\\\Desktop\\\\Computer Agent Master Files\\\\TRADING AGENT V2\\\\.claude\\\\worktrees\\\\epic-roentgen-6c7bda\\\\kucoin_balance.py'\")",
+      "Bash(py -m uvicorn main:app --port 8000)"
     ]
   }
 }

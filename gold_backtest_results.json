@@ -1,0 +1,78 @@
+{
+  "GOLD_G": {
+    "config": "GOLD_G",
+    "symbol": "XAUUSD",
+    "timeframe": "1h",
+    "trades": 40,
+    "wins": 30,
+    "win_rate": 75.0,
+    "avg_r": 0.028,
+    "final": 1019.59,
+    "return_pct": 2.0,
+    "max_dd": 4.0,
+    "by_hour": {
+      "8": {
+        "count": 13,
+        "win_rate": 61.5
+      },
+      "13": {
+        "count": 10,
+        "win_rate": 90.0
+      },
+      "14": {
+        "count": 11,
+        "win_rate": 81.8
+      },
+      "19": {
+        "count": 6,
+        "win_rate": 66.7
+      }
+    },
+    "by_direction": {
+      "LONG": {
+        "count": 28,
+        "win_rate": 67.9
+      },
+      "SHORT": {
+        "count": 12,
+        "win_rate": 91.7
+      }
+    }
+  },
+  "GOLD_L": {
+    "config": "GOLD_L",
+    "symbol": "XAUUSD",
+    "timeframe": "1h",
+    "trades": 22,
+    "wins": 16,
+    "win_rate": 72.7,
+    "avg_r": -0.057,
+    "final": 973.91,
+    "return_pct": -2.6,
+    "max_dd": 3.9,
+    "by_hour": {
+      "8": {
+        "count": 7,
+        "win_rate": 42.9
+      },
+      "13": {
+        "count": 6,
+        "win_rate": 83.3
+      },
+      "14": {
+        "count": 9,
+        "win_rate": 88.9
+      }
+    },
+    "by_direction": {
+      "LONG": {
+        "count": 15,
+        "win_rate": 66.7
+      },
+      "SHORT": {
+        "count": 7,
+        "win_rate": 85.7
+      }
+    }
+  }
+}

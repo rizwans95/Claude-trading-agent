@@ -1,0 +1,59 @@
+{
+  "run_date": "2026-05-17T09:51:25.412832+00:00",
+  "bybit_interval": "15",
+  "cvd_lookback": 20,
+  "hours": [
+    7,
+    12,
+    14,
+    18
+  ],
+  "results": {
+    "BTCUSDT": {
+      "A_WME_ONLY": {
+        "trades": 28,
+        "wins": 23,
+        "win_rate": 82.1,
+        "avg_r": 0.172,
+        "cvd_filtered": 0
+      },
+      "B_WME_AND_CVD": {
+        "trades": 19,
+        "wins": 13,
+        "win_rate": 68.4,
+        "avg_r": 0.082,
+        "cvd_filtered": 11
+      },
+      "C_CVD_ONLY": {
+        "trades": 308,
+        "wins": 190,
+        "win_rate": 61.7,
+        "avg_r": -0.02,
+        "cvd_filtered": 0
+      }
+    },
+    "ETHUSDT": {
+      "A_WME_ONLY": {
+        "trades": 25,
+        "wins": 16,
+        "win_rate": 64.0,
+        "avg_r": -0.092,
+        "cvd_filtered": 0
+      },
+      "B_WME_AND_CVD": {
+        "trades": 13,
+        "wins": 9,
+        "win_rate": 69.2,
+        "avg_r": 0.045,
+        "cvd_filtered": 14
+      },
+      "C_CVD_ONLY": {
+        "trades": 308,
+        "wins": 210,
+        "win_rate": 68.2,
+        "avg_r": 0.057,
+        "cvd_filtered": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "armed": true,
+  "active_trades": {},
+  "leverage": 10,
+  "risk_pct": 0.02,
+  "last_signal": null,
+  "min_confidence": 60,
+  "strategy": "BTC_G"
+}

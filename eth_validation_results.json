@@ -1,0 +1,48 @@
+{
+  "ETH_G": [
+    {
+      "label": "Window 1 (newest)",
+      "trades": 6,
+      "wins": 2,
+      "win_rate": 33.3,
+      "avg_r": -0.505
+    },
+    {
+      "label": "Window 2 (middle)",
+      "trades": 10,
+      "wins": 9,
+      "win_rate": 90.0,
+      "avg_r": 0.314
+    },
+    {
+      "label": "Window 3 (oldest)",
+      "trades": 9,
+      "wins": 5,
+      "win_rate": 55.6,
+      "avg_r": -0.267
+    }
+  ],
+  "BTC_G": [
+    {
+      "label": "Window 1 (newest)",
+      "trades": 10,
+      "wins": 8,
+      "win_rate": 80.0,
+      "avg_r": 0.223
+    },
+    {
+      "label": "Window 2 (middle)",
+      "trades": 9,
+      "wins": 8,
+      "win_rate": 88.9,
+      "avg_r": 0.181
+    },
+    {
+      "label": "Window 3 (oldest)",
+      "trades": 8,
+      "wins": 6,
+      "win_rate": 75.0,
+      "avg_r": 0.073
+    }
+  ]
+}

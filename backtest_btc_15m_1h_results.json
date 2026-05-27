@@ -1,0 +1,178 @@
+{
+  "BTC_15m_G": {
+    "MM2_FIXED_2PCT": {
+      "final": 57.68,
+      "peak": 57.68,
+      "max_drawdown_pct": 2.7,
+      "total_return_pct": 9.9,
+      "trades_taken": 31,
+      "wins": 26,
+      "losses": 5,
+      "win_rate": 83.9,
+      "avg_r": 0.155,
+      "trades_per_week": 2.2,
+      "weekly_return_pct": 0.69,
+      "weekly_dollar": 0.36
+    },
+    "MM3_FIXED_3PCT": {
+      "final": 60.37,
+      "peak": 60.37,
+      "max_drawdown_pct": 4.1,
+      "total_return_pct": 15.0,
+      "trades_taken": 31,
+      "wins": 26,
+      "losses": 5,
+      "win_rate": 83.9,
+      "avg_r": 0.155,
+      "trades_per_week": 2.2,
+      "weekly_return_pct": 1.05,
+      "weekly_dollar": 0.55
+    },
+    "MM7_AFTER_WIN_SCALE": {
+      "final": 59.8,
+      "peak": 59.8,
+      "max_drawdown_pct": 3.5,
+      "total_return_pct": 13.9,
+      "trades_taken": 31,
+      "wins": 26,
+      "losses": 5,
+      "win_rate": 83.9,
+      "avg_r": 0.155,
+      "trades_per_week": 2.2,
+      "weekly_return_pct": 0.97,
+      "weekly_dollar": 0.51
+    }
+  },
+  "BTC_15m_L": {
+    "MM2_FIXED_2PCT": {
+      "final": 57.1,
+      "peak": 57.22,
+      "max_drawdown_pct": 0.7,
+      "total_return_pct": 8.8,
+      "trades_taken": 14,
+      "wins": 13,
+      "losses": 1,
+      "win_rate": 92.9,
+      "avg_r": 0.302,
+      "trades_per_week": 1.6,
+      "weekly_return_pct": 1.02,
+      "weekly_dollar": 0.54
+    },
+    "MM3_FIXED_3PCT": {
+      "final": 59.52,
+      "peak": 59.71,
+      "max_drawdown_pct": 1.0,
+      "total_return_pct": 13.4,
+      "trades_taken": 14,
+      "wins": 13,
+      "losses": 1,
+      "win_rate": 92.9,
+      "avg_r": 0.302,
+      "trades_per_week": 1.6,
+      "weekly_return_pct": 1.56,
+      "weekly_dollar": 0.82
+    },
+    "MM7_AFTER_WIN_SCALE": {
+      "final": 59.27,
+      "peak": 59.46,
+      "max_drawdown_pct": 0.7,
+      "total_return_pct": 12.9,
+      "trades_taken": 14,
+      "wins": 13,
+      "losses": 1,
+      "win_rate": 92.9,
+      "avg_r": 0.302,
+      "trades_per_week": 1.6,
+      "weekly_return_pct": 1.51,
+      "weekly_dollar": 0.79
+    }
+  },
+  "BTC_1H_G": {
+    "MM2_FIXED_2PCT": {
+      "final": 52.15,
+      "peak": 52.84,
+      "max_drawdown_pct": 2.3,
+      "total_return_pct": -0.7,
+      "trades_taken": 10,
+      "wins": 7,
+      "losses": 3,
+      "win_rate": 70.0,
+      "avg_r": -0.031,
+      "trades_per_week": 1.2,
+      "weekly_return_pct": -0.08,
+      "weekly_dollar": -0.04
+    },
+    "MM3_FIXED_3PCT": {
+      "final": 51.95,
+      "peak": 53.02,
+      "max_drawdown_pct": 3.5,
+      "total_return_pct": -1.1,
+      "trades_taken": 10,
+      "wins": 7,
+      "losses": 3,
+      "win_rate": 70.0,
+      "avg_r": -0.031,
+      "trades_per_week": 1.2,
+      "weekly_return_pct": -0.12,
+      "weekly_dollar": -0.06
+    },
+    "MM7_AFTER_WIN_SCALE": {
+      "final": 51.79,
+      "peak": 52.85,
+      "max_drawdown_pct": 3.4,
+      "total_return_pct": -1.3,
+      "trades_taken": 10,
+      "wins": 7,
+      "losses": 3,
+      "win_rate": 70.0,
+      "avg_r": -0.031,
+      "trades_per_week": 1.2,
+      "weekly_return_pct": -0.16,
+      "weekly_dollar": -0.08
+    }
+  },
+  "BTC_1H_L": {
+    "MM2_FIXED_2PCT": {
+      "final": 51.95,
+      "peak": 52.55,
+      "max_drawdown_pct": 2.0,
+      "total_return_pct": -1.0,
+      "trades_taken": 3,
+      "wins": 2,
+      "losses": 1,
+      "win_rate": 66.7,
+      "avg_r": -0.171,
+      "trades_per_week": 0.4,
+      "weekly_return_pct": -0.12,
+      "weekly_dollar": -0.06
+    },
+    "MM3_FIXED_3PCT": {
+      "final": 51.67,
+      "peak": 52.58,
+      "max_drawdown_pct": 3.0,
+      "total_return_pct": -1.6,
+      "trades_taken": 3,
+      "wins": 2,
+      "losses": 1,
+      "win_rate": 66.7,
+      "avg_r": -0.171,
+      "trades_per_week": 0.4,
+      "weekly_return_pct": -0.18,
+      "weekly_dollar": -0.1
+    },
+    "MM7_AFTER_WIN_SCALE": {
+      "final": 51.82,
+      "peak": 52.55,
+      "max_drawdown_pct": 2.3,
+      "total_return_pct": -1.3,
+      "trades_taken": 3,
+      "wins": 2,
+      "losses": 1,
+      "win_rate": 66.7,
+      "avg_r": -0.171,
+      "trades_per_week": 0.4,
+      "weekly_return_pct": -0.15,
+      "weekly_dollar": -0.08
+    }
+  }
+}

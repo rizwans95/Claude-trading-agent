@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trading Agent V2 — BTC-H / BTC-B</title>
+<title>Trading Agent V2</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Ms+Madi&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -512,10 +512,6 @@ canvas { display: block; }
 
 .body-grid {
   position: relative;
-  display: grid;
-  grid-template-columns: 210px 1fr 290px;
-  flex: 1;
-  overflow: hidden;
 }
 
 /* Snake border on the main layout using outline gradient trick */
@@ -754,16 +750,30 @@ canvas { display: block; }
       </div>
       <button class="all-btn" id="btn-ALL" onclick="selectStrategy('ALL')">ALL STRATEGIES</button>
       <div class="strat-grid">
-        <div class="strat-btn active" id="btn-BTC_H" onclick="selectStrategy('BTC_H')" title="BTC-H — High conviction: OI Rising only, hours 12+14, A+B grades">
-          <div class="sn" style="font-size:8px">BTC-H</div>
-          <div class="sa">Hr 12+14 · OI Rising</div>
-          <div class="sw">76.9%</div>
+        <div class="strat-btn active" id="btn-BTC_G" onclick="selectStrategy('BTC_G')" title="BTC General — more frequent signals, A+B grades">
+          <div class="sn" style="font-size:8px">BTC ACTIVE</div>
+          <div class="sa">High Frequency</div>
+          <div class="sw">82.1%</div>
         </div>
-        <div class="strat-btn" id="btn-BTC_B" onclick="selectStrategy('BTC_B')" title="BTC-B — Prop firm config: Grade B, hours 7+12+14+18">
-          <div class="sn" style="font-size:8px">BTC-B</div>
-          <div class="sa">Hr 7+12+14+18 · Prop</div>
-          <div class="sw">64.6%</div>
+        <div class="strat-btn" id="btn-BTC_L" onclick="selectStrategy('BTC_L')" title="BTC Low-risk — Grade B only, tightest filter">
+          <div class="sn" style="font-size:8px">BTC PREMIUM</div>
+          <div class="sa">Best Risk Mgmt</div>
+          <div class="sw">92.3%</div>
         </div>
+        <div class="strat-btn" id="btn-ETH_G" style="opacity:0.35;pointer-events:none" title="ETH on hold — failed validation">
+          <div class="sn" style="font-size:8px">ETH</div>
+          <div class="sa" style="color:var(--orange)">ON HOLD</div>
+          <div class="sw" style="color:var(--text3)">—</div>
+        </div>
+        <div class="strat-btn" id="btn-SPY_L" onclick="selectStrategy('SPY_L')" title="SPY Low-risk — US equity, NY open hours">
+          <div class="sn" style="font-size:8px">SPY EQUITY</div>
+          <div class="sa">NY Session</div>
+          <div class="sw">85.7%</div>
+        </div>
+      </div>
+      <div class="strat-btn" id="btn-GOLD_G" onclick="selectStrategy('GOLD_G')" style="margin-top:4px;grid-column:1/-1" title="Gold General — NY session hours 13,14 UTC">
+        <div class="sn" style="font-size:8px">GOLD G</div>
+        <div class="sa">NY Session · 1h · 75% WR</div>
       </div>
     </div>
     <div>
@@ -890,7 +900,7 @@ canvas { display: block; }
         <div style="font-size:26px;opacity:0.25;margin-bottom:6px">◎</div>
         <div>Waiting for signal</div>
         <div style="font-size:9px;margin-top:5px">Click REFRESH to scan now</div>
-        <div style="margin-top:14px;font-size:9px">Session hours:<br><span style="color:var(--accent)">BTC-H: 12 · 14 UTC &nbsp; BTC-B: 7 · 12 · 14 · 18 UTC</span></div>
+        <div style="margin-top:14px;font-size:9px">Session hours:<br><span style="color:var(--accent)">7 · 12 · 14 · 18 UTC</span></div>
       </div>
     </div>
     </div><!-- end sigBody -->
@@ -942,13 +952,16 @@ canvas { display: block; }
 var _liveBtcPrice = 0;  // updated every 15s by updateBtcPrice
 var _openTradesCache = [];  // last known open trades for price refresh
 var _autoManagedIds  = [];  // signal IDs managed by automation
-var state = { strategy:'BTC_H', mm:'MM3', leverage:10, balance:0 };
+var state = { strategy:'BTC_G', mm:'MM3', leverage:10, balance:0 };
 var _last = null;
 var _autoRef = null;
 
 var SINFO = {
-  BTC_H: { asset:'BTCUSDT', tf:'15m', hours:[12,14],       baseWR:76.9 },
-  BTC_B: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14,18],  baseWR:64.6 },
+  BTC_G: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14,18], baseWR:82.1 },
+  BTC_L: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14],   baseWR:92.3 },
+  ETH_G: { asset:'ETHUSDT', tf:'15m', hours:[7,12,14,18], baseWR:68.0 },
+  SPY_L: { asset:'SPY',     tf:'1h',  hours:[13,14],      baseWR:85.7 },
+  GOLD_G:{ asset:'XAUUSD', tf:'60',  hours:[13,14],      baseWR:75.0 },
 };
 var LEVS = [2,5,10,20,50,100];
 
@@ -1018,7 +1031,7 @@ async function updateBtcPrice() {
 async function checkSrv() {
   var dot=document.getElementById('srvDot'), st=document.getElementById('srvStatus');
   try {
-    await fetch('http://217.154.78.255:8000/', {signal:AbortSignal.timeout(2000)});
+    await fetch('http://127.0.0.1:8000/', {signal:AbortSignal.timeout(2000)});
     dot.className='srv-dot on'; st.textContent='ONLINE'; st.style.color='var(--green)';
   } catch(e) {
     dot.className='srv-dot off'; st.textContent='OFFLINE'; st.style.color='var(--red)';
@@ -1053,24 +1066,25 @@ function selectStrategy(k) {
 }
 
 function autoSelectStrategy() {
-  // Auto-select strategy based on current UTC hour
-  // BTC_H: hours 12,14 — high conviction, OI rising, best avg R
-  // BTC_B: hours 7,12,14,18 — prop firm config, Grade B
+  // Intelligently select strategy based on current UTC hour
+  // BTC_L: hours 7,12,14 (Grade B only, tighter, better validated)
+  // BTC_G: hour 18 (BTC_L doesn't cover this hour)
+  // Others: based on current selection
   var currentStrat = state.strategy;
-  if(currentStrat !== 'BTC_H' && currentStrat !== 'BTC_B' && currentStrat !== 'ALL') return;
+  if(currentStrat !== 'BTC_G' && currentStrat !== 'BTC_L' && currentStrat !== 'ALL') return;
 
   var h = new Date().getUTCHours();
   var autoStrat = null;
   var reason    = '';
 
-  if(h === 12 || h === 14) {
-    autoStrat = 'BTC_H';
-    reason    = 'Hour ' + h + ':00 UTC — BTC_H active (OI Rising only, 76.9% WR)';
-  } else if(h === 7 || h === 18) {
-    autoStrat = 'BTC_B';
-    reason    = 'Hour ' + h + ':00 UTC — BTC_B active (prop firm config, Grade B)';
+  if(h === 7 || h === 12 || h === 14) {
+    autoStrat = 'BTC_L';
+    reason    = 'Hour ' + h + ':00 UTC — BTC_L active (Grade B, 100% WR validated)';
+  } else if(h === 18) {
+    autoStrat = 'BTC_G';
+    reason    = 'Hour 18:00 UTC — BTC_G active (BTC_L not validated this hour)';
   } else {
-    return; // outside session hours
+    return; // outside session hours — no auto switch
   }
 
   if(autoStrat && autoStrat !== state.strategy) {
@@ -1132,7 +1146,7 @@ function getMarketSession(h) {
 }
 
 function updateSessHours() {
-  var k=state.strategy==='ALL'?'BTC_H':state.strategy, info=SINFO[k]; if(!info) return;
+  var k=state.strategy==='ALL'?'BTC_G':state.strategy, info=SINFO[k]; if(!info) return;
   var nowH=new Date().getUTCHours();
   var parts=info.hours.map(function(h){
     var isNow = h===nowH;
@@ -1245,7 +1259,7 @@ function renderLevTbl(pos) {
 
 // ── PROBABILITY ───────────────────────────────────────────
 function calcProb(data) {
-  var k=state.strategy==='ALL'?'BTC_H':state.strategy, info=SINFO[k];
+  var k=state.strategy==='ALL'?'BTC_G':state.strategy, info=SINFO[k];
   var d=data.decision||{}, wme=data.wme||{}, sb=d.score_breakdown||{};
   var prob=info?info.baseWR:70;
   var dir=d.bias||'';
@@ -1530,7 +1544,7 @@ function renderSig(data) {
 
 // ── SESSION CHECK (client-side) ──────────────────────────
 function checkInSession() {
-  var k=state.strategy==='ALL'?'BTC_H':state.strategy, info=SINFO[k];
+  var k=state.strategy==='ALL'?'BTC_G':state.strategy, info=SINFO[k];
   if(!info) return false;
   return info.hours.includes(new Date().getUTCHours());
 }
@@ -1545,7 +1559,7 @@ async function fetchMTF(symbol) {
   tfs.forEach(async function(t){
     var card=document.getElementById(t.id); if(!card) return;
     try {
-      var res=await fetch('http://217.154.78.255:8000/signal/latest?symbol='+symbol+'&timeframe='+t.tf+'&bars=80',{signal:AbortSignal.timeout(8000)});
+      var res=await fetch('http://127.0.0.1:8000/signal/latest?symbol='+symbol+'&timeframe='+t.tf+'&bars=80',{signal:AbortSignal.timeout(8000)});
       if(!res.ok) throw new Error();
       var data=await res.json();
       var d=data.decision||{}, dir=d.bias||'—', conf=d.confidence||0;
@@ -1562,10 +1576,10 @@ async function fetchMTF(symbol) {
 }
 
 async function fetchSig() {
-  var k=state.strategy==='ALL'?'BTC_H':state.strategy, info=SINFO[k];
+  var k=state.strategy==='ALL'?'BTC_G':state.strategy, info=SINFO[k];
   var sym=info?info.asset:'BTCUSDT', tf=info?info.tf:'15m';
   try {
-    var res=await fetch('http://217.154.78.255:8000/signal/latest?symbol='+sym+'&timeframe='+tf+'&bars=120',{signal:AbortSignal.timeout(15000)});
+    var res=await fetch('http://127.0.0.1:8000/signal/latest?symbol='+sym+'&timeframe='+tf+'&bars=120',{signal:AbortSignal.timeout(15000)});
     if(!res.ok) throw new Error('HTTP '+res.status);
     var data=await res.json();
     _last=data;
@@ -1677,9 +1691,9 @@ function showSkipForm() {
 async function submitTrade() {
   var data=_last; if(!data) return;
   var d=data.decision||{}, bal=data.balance||{};
-  var payload={action:'TOOK',strategy:state.strategy==='ALL'?'BTC_H':state.strategy,symbol:data.symbol,timeframe:data.timeframe,direction:d.bias||'LONG',grade:d.setup_grade||'-',confidence:d.confidence||0,entry_price:parseFloat(document.getElementById('mf_e').value),stop_loss:parseFloat(document.getElementById('mf_s').value),leverage:document.getElementById('mf_l').value,signal_ts:data.timestamp,notes:document.getElementById('mf_n').value,balance:bal.usdt||state.balance||0};
+  var payload={action:'TOOK',strategy:state.strategy==='ALL'?'BTC_G':state.strategy,symbol:data.symbol,timeframe:data.timeframe,direction:d.bias||'LONG',grade:d.setup_grade||'-',confidence:d.confidence||0,entry_price:parseFloat(document.getElementById('mf_e').value),stop_loss:parseFloat(document.getElementById('mf_s').value),leverage:document.getElementById('mf_l').value,signal_ts:data.timestamp,notes:document.getElementById('mf_n').value,balance:bal.usdt||state.balance||0};
   try {
-    var res=await fetch('http://217.154.78.255:8000/trade/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var res=await fetch('http://127.0.0.1:8000/trade/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     var r=await res.json(); document.getElementById('trdModal')?.remove();
     showConfirmation('Trade recorded',r.signal_id,'var(--green)'); loadOpenTrades(); loadHistory();
   } catch(e){ showToast('Server error: '+e.message,'var(--red)'); }
@@ -1688,9 +1702,9 @@ async function submitTrade() {
 async function submitSkip() {
   var data=_last; if(!data) return;
   var d=data.decision||{}, pos=data.positions||{}, bal=data.balance||{};
-  var payload={action:'SKIPPED',strategy:state.strategy==='ALL'?'BTC_H':state.strategy,symbol:data.symbol,timeframe:data.timeframe,direction:d.bias||'-',grade:d.setup_grade||'-',confidence:d.confidence||0,entry_price:data.price||0,stop_loss:pos.stop_price||0,leverage:'none',signal_ts:data.timestamp,notes:document.getElementById('sf_r').value+(document.getElementById('sf_n').value?' — '+document.getElementById('sf_n').value:''),balance:bal.usdt||state.balance||0};
+  var payload={action:'SKIPPED',strategy:state.strategy==='ALL'?'BTC_G':state.strategy,symbol:data.symbol,timeframe:data.timeframe,direction:d.bias||'-',grade:d.setup_grade||'-',confidence:d.confidence||0,entry_price:data.price||0,stop_loss:pos.stop_price||0,leverage:'none',signal_ts:data.timestamp,notes:document.getElementById('sf_r').value+(document.getElementById('sf_n').value?' — '+document.getElementById('sf_n').value:''),balance:bal.usdt||state.balance||0};
   try {
-    var res=await fetch('http://217.154.78.255:8000/trade/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var res=await fetch('http://127.0.0.1:8000/trade/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     var r=await res.json(); document.getElementById('skipModal')?.remove();
     showConfirmation('Skip recorded',r.signal_id,'var(--gold)');
   } catch(e){ showToast('Server error: '+e.message,'var(--red)'); }
@@ -1708,11 +1722,11 @@ async function showReview() {
     +'</div><div id="revContent" style="color:var(--text3);font-family:var(--mono);font-size:10px">Loading...</div></div>';
   document.body.appendChild(ov);
   try {
-    var res=await fetch('http://217.154.78.255:8000/trade/review',{signal:AbortSignal.timeout(10000)});
+    var res=await fetch('http://127.0.0.1:8000/trade/review',{signal:AbortSignal.timeout(10000)});
     var data=await res.json();
     var openTrades=[];
     try {
-      var r2=await fetch('http://217.154.78.255:8000/trade/status');
+      var r2=await fetch('http://127.0.0.1:8000/trade/status');
       var d2=await r2.json();
       openTrades=d2.open_trades||[];
       _openTradesCache=openTrades;
@@ -1750,7 +1764,7 @@ function renderReviewContent(d, openTrades) {
 
 async function loadOpenTradesForClose() {
   try {
-    var res  = await fetch('http://217.154.78.255:8000/trade/status', {signal:AbortSignal.timeout(6000)});
+    var res  = await fetch('http://127.0.0.1:8000/trade/status', {signal:AbortSignal.timeout(6000)});
     if (!res.ok) return null;
     var data = await res.json();
     return data.open_trades || [];
@@ -1826,7 +1840,7 @@ async function submitClose() {
   var tp=document.getElementById('rv_tp')?.value;
   if(!id||!ex) return showToast('Enter Signal ID and exit price','var(--red)');
   try {
-    var res=await fetch('http://217.154.78.255:8000/trade/close',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({signal_id:id,exit_price:ex,tp_hit:tp})});
+    var res=await fetch('http://127.0.0.1:8000/trade/close',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({signal_id:id,exit_price:ex,tp_hit:tp})});
     var r=await res.json();
     document.getElementById('revModal')?.remove();
     showConfirmation(r.status+' · '+(r.r_multiple>0?'+':'')+r.r_multiple+'R · $'+(r.pnl_usdt>0?'+':'')+r.pnl_usdt,id,r.status==='WIN'?'var(--green)':'var(--red)');
@@ -1923,7 +1937,7 @@ function recommendMM(data) {
   var grade= d.setup_grade || 'C';
   var inSes= checkInSession();
   var nowH = new Date().getUTCHours();
-  var k    = state.strategy === 'ALL' ? 'BTC_H' : state.strategy;
+  var k    = state.strategy === 'ALL' ? 'BTC_G' : state.strategy;
   var info = SINFO[k] || {};
   var mode = info.mode || 'G';
 
@@ -1955,7 +1969,7 @@ function recommendMM(data) {
   }
 
   // Bonus: premium hours
-  var highWRHours = {'BTC_H':[12,14],'BTC_B':[7,12,14,18]};
+  var highWRHours = {'BTC_G':[12,14],'BTC_L':[7,12,14],'GOLD_G':[13,14],'SPY_L':[13,14]};
   var premiumH = (highWRHours[k] || []).includes(nowH);
   if (premiumH) { baseRisk = Math.min(0.03, baseRisk + 0.005); reasons.push('premium hour'); }
 
@@ -2035,7 +2049,7 @@ function onMMChange() {
 function updateCountdown() {
   var el = document.getElementById('sessCountdown');
   if (!el) return;
-  var k    = state.strategy === 'ALL' ? 'BTC_H' : state.strategy;
+  var k    = state.strategy === 'ALL' ? 'BTC_G' : state.strategy;
   var info = SINFO[k]; if (!info) return;
   var now  = new Date();
   var nowH = now.getUTCHours(), nowM = now.getUTCMinutes(), nowS = now.getUTCSeconds();
@@ -2252,7 +2266,7 @@ async function correctTrade(signalId) {
   exitPx = parseFloat(exitPx);
   if (isNaN(exitPx) || exitPx <= 0) { showToast('Invalid exit price', 'var(--red)'); return; }
   try {
-    var res = await fetch('http://217.154.78.255:8000/trade/correct', {
+    var res = await fetch('http://127.0.0.1:8000/trade/correct', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({signal_id: signalId, exit_price: exitPx})
@@ -2286,7 +2300,7 @@ async function confirmHandoff(btn) {
   closeHandoffModal();
 
   try {
-    var res = await fetch('http://217.154.78.255:8000/auto/handoff', {
+    var res = await fetch('http://127.0.0.1:8000/auto/handoff', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -2360,7 +2374,7 @@ var _lastKnownTradeIds   = [];
 
 async function pollAutomationTrades() {
   try {
-    var res  = await fetch('http://217.154.78.255:8000/auto/status', {signal:AbortSignal.timeout(3000)});
+    var res  = await fetch('http://127.0.0.1:8000/auto/status', {signal:AbortSignal.timeout(3000)});
     var data = await res.json();
 
     // Check for new trades
@@ -2370,7 +2384,7 @@ async function pollAutomationTrades() {
     if (newTrades.length > 0) {
       // New trade detected — fetch details and show popup
       try {
-        var r2   = await fetch('http://217.154.78.255:8000/auto/status');
+        var r2   = await fetch('http://127.0.0.1:8000/auto/status');
         var d2   = await r2.json();
         // Show popup for each new trade
         newTrades.forEach(function(id) {
@@ -2401,7 +2415,7 @@ async function pollAutomationTrades() {
 
 async function loadAutoStatus() {
   try {
-    var res  = await fetch('http://217.154.78.255:8000/auto/status', {signal:AbortSignal.timeout(3000)});
+    var res  = await fetch('http://127.0.0.1:8000/auto/status', {signal:AbortSignal.timeout(3000)});
     var data = await res.json();
     updateAutoBadge(data);
   } catch(e) {}
@@ -2510,7 +2524,7 @@ async function confirmArm() {
   var risk = parseFloat(document.getElementById('arm_risk').value);
   document.getElementById('armModal')?.remove();
   try {
-    var res  = await fetch('http://217.154.78.255:8000/auto/arm', {
+    var res  = await fetch('http://127.0.0.1:8000/auto/arm', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({leverage: lev, risk_pct: risk})
     });
@@ -2526,7 +2540,7 @@ async function confirmArm() {
 
 async function disarmAuto() {
   try {
-    var res = await fetch('http://217.154.78.255:8000/auto/disarm', {method:'POST'});
+    var res = await fetch('http://127.0.0.1:8000/auto/disarm', {method:'POST'});
     var data = await res.json();
     showToast('Automation DISARMED', 'var(--gold)');
     loadAutoStatus();
@@ -2536,7 +2550,7 @@ async function disarmAuto() {
 async function confirmEmergencyStop() {
   if (!confirm('EMERGENCY STOP\n\nThis will close ALL open positions on KuCoin at market price.\n\nAre you sure?')) return;
   try {
-    var res  = await fetch('http://217.154.78.255:8000/auto/emergency_stop', {method:'POST'});
+    var res  = await fetch('http://127.0.0.1:8000/auto/emergency_stop', {method:'POST'});
     var data = await res.json();
     if (data.success) {
       showToast('EMERGENCY STOP — all positions closed', 'var(--red)');
@@ -2550,7 +2564,7 @@ async function confirmEmergencyStop() {
 // ── OPEN TRADE BANNER ─────────────────────────────────────
 async function loadOpenTrades() {
   try {
-    var res = await fetch('http://217.154.78.255:8000/trade/status',{signal:AbortSignal.timeout(4000)});
+    var res = await fetch('http://127.0.0.1:8000/trade/status',{signal:AbortSignal.timeout(4000)});
     if(!res.ok) return;
     var data = await res.json();
     var trades = data.open_trades||[];
@@ -2635,7 +2649,7 @@ function renderOTB(trades) {
 // ── TRADE HISTORY TABLE ───────────────────────────────────
 async function loadHistory() {
   try {
-    var res = await fetch('http://217.154.78.255:8000/trade/history?limit=20',{signal:AbortSignal.timeout(4000)});
+    var res = await fetch('http://127.0.0.1:8000/trade/history?limit=20',{signal:AbortSignal.timeout(4000)});
     if(!res.ok) return;
     var data = await res.json();
     renderHistory(data.trades||[], data.total||0);

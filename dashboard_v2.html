@@ -754,13 +754,16 @@ canvas { display: block; }
       </div>
       <button class="all-btn" id="btn-ALL" onclick="selectStrategy('ALL')">ALL STRATEGIES</button>
       <div class="strat-grid">
-        <div class="strat-btn active" id="btn-BTC_H" onclick="selectStrategy('BTC_H')" title="BTC-H — High conviction: OI Rising only, hours 12+14, A+B grades">
+        <div class="strat-btn active" id="btn-BTC_H" onclick="selectStrategy('BTC_H')" title="BTC-H — Aggressive: All params loosened, Grade A+B, 1.0 trade/week">
           <div class="sn" style="font-size:8px">BTC-H</div>
-          <div class="sa">Hr 12+14 · OI Rising</div>
-          <div class="sw">76.9%</div>
+          <div class="sa">A+B · All params · 1.0/wk</div>
+          <div class="sw">64.1%</div>
         </div>
-        <div class="strat-btn" id="btn-BTC_B" onclick="selectStrategy('BTC_B')" title="BTC-B — Prop firm config: Grade B, hours 7+12+14+18">
+        <div class="strat-btn" id="btn-BTC_B" onclick="selectStrategy('BTC_B')" title="BTC-B — Conservative: Grade B only, grade thresh=55">
           <div class="sn" style="font-size:8px">BTC-B</div>
+          <div class="sa">B only · thresh=55 · 0.56/wk</div>
+          <div class="sw">64.8%</div>
+        </div>
           <div class="sa">Hr 7+12+14+18 · Prop</div>
           <div class="sw">64.6%</div>
         </div>
@@ -947,8 +950,8 @@ var _last = null;
 var _autoRef = null;
 
 var SINFO = {
-  BTC_H: { asset:'BTCUSDT', tf:'15m', hours:[12,14],       baseWR:76.9 },
-  BTC_B: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14,18],  baseWR:64.6 },
+  BTC_H: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14,18],  baseWR:64.1 },
+  BTC_B: { asset:'BTCUSDT', tf:'15m', hours:[7,12,14,18],  baseWR:64.8 },
 };
 var LEVS = [2,5,10,20,50,100];
 

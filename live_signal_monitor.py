@@ -59,59 +59,42 @@ MAX_LEVERAGE_BTC= 100           # KuCoin BTC futures max
 
 STRATEGIES = [
     {
-        "key":      "BTC_H",
-        "symbol":   "BTCUSDT",
-        "tf":       "15",
-        "hours":    [12, 14],
-        "grades":   ["A", "B"],
-        "mode":     "H",
-        "active":   True,
-        "window":   120,
-        "max_bars": 60,
-        "cooldown": 20,
-        "skip_funding": ["MILD_POSITIVE", "HIGH_POSITIVE"],
-        "require_oi":   ["RISING", "RISING_ELEVATED"],
-        "risk_pct":     0.05,
+        "key":           "BTC_H",
+        "symbol":        "BTCUSDT",
+        "tf":            "15",
+        "hours":         [7, 12, 14, 18],
+        "grades":        ["A", "B"],
+        "mode":          "H",
+        "active":        True,
+        "window":        120,
+        "max_bars":      60,
+        "cooldown":      15,
+        "skip_funding":  ["MILD_POSITIVE", "HIGH_POSITIVE"],
+        "require_oi":    None,
+        "grade_thresh":  55,
+        "bar_tolerance": 1,
+        "risk_pct":      0.02,
+        "risk_pct_hc":   0.05,
     },
     {
-        "key":      "BTC_B",
-        "symbol":   "BTCUSDT",
-        "tf":       "15",
-        "hours":    [7, 12, 14, 18],
-        "grades":   ["B"],
-        "mode":     "B",
-        "active":   True,
-        "window":   120,
-        "max_bars": 60,
-        "cooldown": 20,
-        "skip_funding": ["MILD_POSITIVE", "HIGH_POSITIVE"],
-        "require_oi":   None,
-        "risk_pct":     0.02,
+        "key":           "BTC_B",
+        "symbol":        "BTCUSDT",
+        "tf":            "15",
+        "hours":         [7, 12, 14, 18],
+        "grades":        ["B"],
+        "mode":          "B",
+        "active":        True,
+        "window":        120,
+        "max_bars":      60,
+        "cooldown":      20,
+        "skip_funding":  ["MILD_POSITIVE", "HIGH_POSITIVE"],
+        "require_oi":    None,
+        "grade_thresh":  55,
+        "bar_tolerance": 0,
+        "risk_pct":      0.02,
+        "risk_pct_hc":   0.05,
     },
-    {
-        "key":      "GOLD_G",
-        "symbol":   "XAUUSD",
-        "tf":       "60",
-        "hours":    [13, 14],
-        "grades":   None,
-        "mode":     "G",
-        "active":   True,
-        "window":   85,
-        "max_bars": 20,
-        "cooldown": 8,
-    },
-    {
-        "key":      "ETH_G",
-        "symbol":   "ETHUSDT",
-        "tf":       "15",
-        "hours":    [7, 12, 14, 18],
-        "grades":   None,
-        "mode":     "G",
-        "active":   False,   # ON HOLD — failed validation
-        "window":   120,
-        "max_bars": 60,
-        "cooldown": 20,
-    },
+
 ]
 
 # CSV columns — in this exact order
@@ -277,7 +260,8 @@ def scan_strategy(strat, balance_info):
         atr_data = compute_atr(df)
         vi       = compute_volume_intelligence(df, pavp)
         swing    = vi.get("swing_profiles", {})
-        wme      = compute_wme_signal(df, bar_tolerance=0)
+        bar_tol  = strat.get("bar_tolerance", 0)
+        wme      = compute_wme_signal(df, bar_tolerance=bar_tol)
         curr     = wme["current"]
         tri      = compute_cvd_triangles(df, cost_rank_thresh=75.0)
     except Exception as e:
@@ -353,7 +337,10 @@ def scan_strategy(strat, balance_info):
         except Exception:
             oi_ok = False
 
-    # Valid trade check
+    # Valid trade check — apply grade_thresh from strategy config
+    grade_thresh = strat.get("grade_thresh", 60)
+    if confidence < grade_thresh:
+        grade = "C"
     grade_ok = (strat["grades"] is None or grade in strat["grades"])
     valid    = has_wme and in_session and grade != "C" and grade_ok and funding_ok and oi_ok
 

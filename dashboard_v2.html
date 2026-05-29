@@ -613,6 +613,36 @@ canvas { display: block; }
   animation: snakeMove 8s linear infinite 0s, scanLine 3s ease-in-out infinite;
 }
 .m-inp { width:100%; padding:6px 8px; background:var(--panel); border:1px solid var(--border2); border-radius:4px; color:var(--accent); font-family:var(--mono); font-size:12px; font-weight:700; }
+
+/* ── GOLD PANEL ── */
+.gold-section { border-top: 2px solid var(--gold2); background: var(--gold-dim); flex-shrink:0; }
+.gold-hdr { display:flex; align-items:center; justify-content:space-between;
+  padding:7px 11px; border-bottom:1px solid rgba(255,179,0,0.15); }
+.gold-hdr-title { font-family:var(--mono); font-size:9px; font-weight:700;
+  color:var(--gold); letter-spacing:0.12em; text-transform:uppercase; }
+.gold-stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:7px 11px 5px; }
+.gold-stat { background:rgba(255,179,0,0.06); border:1px solid rgba(255,179,0,0.15);
+  border-radius:5px; padding:5px 4px; text-align:center; }
+.gold-stat-val { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--gold); }
+.gold-stat-lbl { font-size:7px; color:var(--text3); text-transform:uppercase;
+  letter-spacing:0.07em; margin-top:1px; }
+.gold-sig-box { margin:0 11px 7px; background:rgba(255,179,0,0.05);
+  border:1px solid rgba(255,179,0,0.2); border-radius:6px; padding:8px 10px; }
+.gold-sig-ttl { font-family:var(--mono); font-size:9px; font-weight:700;
+  color:var(--gold); margin-bottom:5px; }
+.gold-sig-row { display:flex; justify-content:space-between; padding:2px 0;
+  font-family:var(--mono); font-size:8px; color:var(--text3);
+  border-bottom:1px solid rgba(255,179,0,0.07); }
+.gold-sig-row:last-child { border-bottom:none; }
+.gold-hours-row { display:flex; gap:3px; flex-wrap:wrap; padding:0 11px 7px; }
+.gold-hr { background:rgba(255,179,0,0.07); border:1px solid rgba(255,179,0,0.2);
+  border-radius:3px; padding:2px 5px; font-family:var(--mono); font-size:7px; color:var(--gold); }
+.gold-hr.active { background:rgba(255,179,0,0.25); color:#fff; border-color:var(--gold); }
+.gold-log { padding:0 11px 7px; max-height:100px; overflow-y:auto; }
+.gold-log-row { display:flex; justify-content:space-between; padding:3px 0;
+  font-family:var(--mono); font-size:8px;
+  border-bottom:1px solid rgba(255,179,0,0.06); }
+.gold-log-row:last-child { border-bottom:none; }
 </style>
 </head>
 <body>
@@ -852,6 +882,60 @@ canvas { display: block; }
       </button>
     </div>
 
+    <!-- GOLD PANEL -->
+    <div class="gold-section" id="goldSection">
+      <div class="gold-hdr">
+        <div class="gold-hdr-title">🏅 GOLD · XAUUSD · FVG Strategy</div>
+        <button onclick="toggleGold()" id="goldToggle"
+          style="background:none;border:1px solid rgba(255,179,0,0.3);border-radius:3px;
+            color:var(--gold);font-family:var(--mono);font-size:7px;padding:2px 6px;cursor:pointer">
+          HIDE
+        </button>
+      </div>
+      <div id="goldBody">
+        <div class="gold-stat-row">
+          <div class="gold-stat">
+            <div class="gold-stat-val" id="gWR">38.5%</div>
+            <div class="gold-stat-lbl">WR (OOS)</div>
+          </div>
+          <div class="gold-stat">
+            <div class="gold-stat-val" id="gAvgR">+0.161</div>
+            <div class="gold-stat-lbl">Avg R</div>
+          </div>
+          <div class="gold-stat">
+            <div class="gold-stat-val" id="gRet">+55%</div>
+            <div class="gold-stat-lbl">Return</div>
+          </div>
+          <div class="gold-stat">
+            <div class="gold-stat-val" id="gTrades">205</div>
+            <div class="gold-stat-lbl">Trades</div>
+          </div>
+        </div>
+        <div class="gold-sig-box">
+          <div class="gold-sig-ttl" id="gSigTtl">⏳ SCANNING...</div>
+          <div id="gSigBody" style="color:var(--text3);font-size:8px">
+            Fetching live XAUUSD signal...
+          </div>
+        </div>
+        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);
+          padding:0 11px 3px;letter-spacing:0.1em">SESSION HOURS (UTC)</div>
+        <div class="gold-hours-row">
+          <div class="gold-hr" id="gh2">02</div>
+          <div class="gold-hr" id="gh4">04</div>
+          <div class="gold-hr" id="gh9">09</div>
+          <div class="gold-hr" id="gh11">11</div>
+          <div class="gold-hr" id="gh16">16</div>
+          <div class="gold-hr" id="gh17">17</div>
+          <div class="gold-hr" id="gh23">23</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);
+          padding:0 11px 3px;letter-spacing:0.1em">PAPER TRADE LOG</div>
+        <div class="gold-log" id="goldLog">
+          <div style="color:var(--text3);font-size:8px;padding:3px 0">No trades yet</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Trade history -->
     <div class="hist-wrap" id="histWrap">
       <div class="hist-hdr">
@@ -895,11 +979,113 @@ var SINFO = {
 var LEVS = [2,5,10,20,50,100];
 
 // ── INIT ──────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════
+// GOLD PANEL
+// ══════════════════════════════════════════════════════
+var GOLD_HOURS = [2,4,9,11,16,17,23];
+var _goldHidden = false;
+
+function toggleGold() {
+  _goldHidden = !_goldHidden;
+  var body = document.getElementById('goldBody');
+  var btn  = document.getElementById('goldToggle');
+  if(body) body.style.display = _goldHidden ? 'none' : 'block';
+  if(btn)  btn.textContent    = _goldHidden ? 'SHOW' : 'HIDE';
+}
+
+function highlightGoldHour() {
+  var h = new Date().getUTCHours();
+  GOLD_HOURS.forEach(function(gh) {
+    var el = document.getElementById('gh'+gh);
+    if(el) { el.classList.toggle('active', gh===h); }
+  });
+}
+
+function fetchGoldSignal() {
+  fetch('/gold/signal')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      renderGoldSignal(data);
+    })
+    .catch(function(){
+      document.getElementById('gSigTtl').textContent = '⏳ MONITOR STARTING...';
+      document.getElementById('gSigBody').innerHTML =
+        '<span style="color:var(--text3)">Gold monitor not yet running on VPS</span>';
+    });
+}
+
+function renderGoldSignal(data) {
+  var ttl  = document.getElementById('gSigTtl');
+  var body = document.getElementById('gSigBody');
+  var log  = document.getElementById('goldLog');
+
+  // Signal status
+  var sig = data.open_trade || null;
+  var state = data.monitor_state || 'SCAN';
+
+  if(sig) {
+    ttl.textContent = '🏅 OPEN TRADE';
+    ttl.style.color = 'var(--gold)';
+    body.innerHTML =
+      '<div class="gold-sig-row"><span>Entry</span><span style="color:var(--accent)">$'+parseFloat(sig.entry_price).toFixed(2)+'</span></div>'+
+      '<div class="gold-sig-row"><span>Stop</span><span style="color:var(--red)">$'+parseFloat(sig.stop_loss).toFixed(2)+'</span></div>'+
+      '<div class="gold-sig-row"><span>TP</span><span style="color:var(--green)">$'+parseFloat(sig.take_profit).toFixed(2)+'</span></div>'+
+      '<div class="gold-sig-row"><span>R to TP</span><span style="color:var(--gold)">'+sig.r_to_tp+'R</span></div>'+
+      '<div class="gold-sig-row"><span>Since</span><span>'+sig.timestamp+'</span></div>';
+  } else if(state==='WAITING') {
+    var ft = data.fvg_top, fb = data.fvg_bottom;
+    ttl.textContent = '📐 FVG DETECTED — WAITING';
+    ttl.style.color = 'var(--gold)';
+    body.innerHTML =
+      '<div class="gold-sig-row"><span>FVG Zone</span><span style="color:var(--gold)">$'+(fb||0).toFixed(2)+' → $'+(ft||0).toFixed(2)+'</span></div>'+
+      '<div class="gold-sig-row"><span>Status</span><span>Waiting for retest...</span></div>';
+  } else {
+    ttl.textContent = '⏳ SCANNING';
+    ttl.style.color = 'var(--text3)';
+    body.innerHTML = '<span style="color:var(--text3);font-size:8px">No active setup — monitoring session hours</span>';
+  }
+
+  // Stats from data
+  if(data.stats) {
+    var s = data.stats;
+    var gwr = document.getElementById('gWR');
+    var gav = document.getElementById('gAvgR');
+    var gtr = document.getElementById('gTrades');
+    if(gwr) gwr.textContent = s.wr+'%';
+    if(gav) gav.textContent = (s.avg_r>0?'+':'')+s.avg_r;
+    if(gtr) gtr.textContent = s.total;
+  }
+
+  // Trade log
+  var trades = data.trades || [];
+  if(trades.length === 0) {
+    log.innerHTML = '<div style="color:var(--text3);font-size:8px;padding:3px 0">No trades yet</div>';
+  } else {
+    log.innerHTML = trades.slice(-6).reverse().map(function(t){
+      var color = t.status==='WIN'?'var(--green)':t.status==='LOSS'?'var(--red)':'var(--gold)';
+      var r = t.r_multiple!=null ? (parseFloat(t.r_multiple)>0?'+':'')+parseFloat(t.r_multiple).toFixed(2)+'R' : 'OPEN';
+      return '<div class="gold-log-row">'+
+        '<span style="color:var(--text3)">'+(t.timestamp||'').slice(5,16)+'</span>'+
+        '<span>$'+parseFloat(t.entry_price).toFixed(0)+'</span>'+
+        '<span style="color:'+color+'">'+t.status+'</span>'+
+        '<span style="color:'+color+'">'+r+'</span>'+
+        '</div>';
+    }).join('');
+  }
+}
+
+// Auto refresh gold every 60s
+setInterval(fetchGoldSignal, 60000);
+highlightGoldHour();
+setInterval(highlightGoldHour, 60000);
+
 document.addEventListener('DOMContentLoaded', function() {
   var saved = localStorage.getItem('tv2_balance');
   if (saved) { document.getElementById('balInput').value = saved; state.balance = parseFloat(saved)||0; updateRisk(); }
   updateClock(); setInterval(updateClock, 1000);
   updateBtcPrice(); setInterval(updateBtcPrice, 15000);
+  fetchGoldSignal();
 
   // Generate twinkling stars in header
   var hdr = document.getElementById('hdrStars');

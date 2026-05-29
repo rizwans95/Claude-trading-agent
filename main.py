@@ -1578,3 +1578,99 @@ def correct_trade(payload: dict):
         "pnl_usdt":   pnl_usdt,
         "status":     status,
     }
+
+# ─────────────────────────────────────────────────────────────
+# ENDPOINT — GOLD SIGNAL (/gold/signal)
+# ─────────────────────────────────────────────────────────────
+
+@app.get("/gold/signal")
+def get_gold_signal():
+    """
+    Returns current GOLD paper trade status for the dashboard panel.
+    Reads gold_trade_log.csv and gold_monitor_state.json.
+    """
+    import os, json, math
+    import numpy as _np
+
+    def _sfh(v):
+        try:
+            f = float(v)
+            return None if (math.isnan(f) or math.isinf(f)) else f
+        except:
+            return None
+
+    result = {
+        "monitor_state": "SCAN",
+        "fvg_top":       None,
+        "fvg_bottom":    None,
+        "open_trade":    None,
+        "trades":        [],
+        "stats":         {"total": 0, "wins": 0, "wr": 0, "avg_r": 0},
+    }
+
+    # Load monitor state
+    state_file = "gold_monitor_state.json"
+    if os.path.exists(state_file):
+        try:
+            with open(state_file) as f:
+                s = json.load(f)
+            result["monitor_state"] = s.get("monitor_state", "SCAN")
+            result["fvg_top"]       = s.get("fvg_top")
+            result["fvg_bottom"]    = s.get("fvg_bottom")
+        except Exception:
+            pass
+
+    # Load trade log
+    log_file = "gold_trade_log.csv"
+    if not os.path.exists(log_file):
+        return result
+
+    try:
+        df = pd.read_csv(log_file)
+    except Exception:
+        return result
+
+    # Open trade
+    open_trades = df[df["status"] == "OPEN"]
+    if len(open_trades) > 0:
+        t = open_trades.iloc[-1]
+        result["open_trade"] = {
+            "signal_id":   str(t.get("signal_id", "") or ""),
+            "timestamp":   str(t.get("timestamp",  "") or "")[:16],
+            "entry_price": _sfh(t.get("entry_price")) or 0.0,
+            "stop_loss":   _sfh(t.get("stop_loss"))   or 0.0,
+            "take_profit": _sfh(t.get("take_profit")) or 0.0,
+            "r_to_tp":     _sfh(t.get("r_to_tp"))     or 0.0,
+            "status":      "OPEN",
+        }
+
+    # All trades for log display
+    closed = df[df["status"].isin(["WIN", "LOSS"])]
+    trades = []
+    for _, row in df.tail(10).iterrows():
+        trades.append({
+            "signal_id":   str(row.get("signal_id",   "") or ""),
+            "timestamp":   str(row.get("timestamp",   "") or "")[:16],
+            "direction":   str(row.get("direction",   "") or ""),
+            "entry_price": _sfh(row.get("entry_price")) or 0.0,
+            "stop_loss":   _sfh(row.get("stop_loss"))   or 0.0,
+            "take_profit": _sfh(row.get("take_profit")) or 0.0,
+            "status":      str(row.get("status",       "") or ""),
+            "r_multiple":  _sfh(row.get("r_multiple")),
+            "pnl_usd":     _sfh(row.get("pnl_usd")),
+        })
+    result["trades"] = trades
+
+    # Stats
+    if len(closed) > 0:
+        wins   = len(closed[closed["status"] == "WIN"])
+        total  = len(closed)
+        avg_r  = round(float(closed["r_multiple"].dropna().mean()), 3) if len(closed) > 0 else 0
+        result["stats"] = {
+            "total": total,
+            "wins":  wins,
+            "wr":    round(wins / total * 100, 1),
+            "avg_r": avg_r,
+        }
+
+    return result

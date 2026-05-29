@@ -332,7 +332,7 @@ body::after {
 .tp-ret { font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 3px; background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); color: var(--green); }
 
 /* BODY */
-.body-grid { display: grid; grid-template-columns: 210px 1fr 290px; flex: 1; overflow: hidden; }
+.body-grid { display: grid; grid-template-columns: 280px 1fr 280px; flex: 1; overflow: hidden; }
 
 /* SIDEBAR */
 .sidebar { border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow-y: hidden; padding: 8px; gap: 6px; }
@@ -510,13 +510,7 @@ canvas { display: block; }
   100% { background-position: 400% 0%; }
 }
 
-.body-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: 210px 1fr 290px;
-  flex: 1;
-  overflow: hidden;
-}
+
 
 /* Snake border on the main layout using outline gradient trick */
 .sidebar {
@@ -643,6 +637,110 @@ canvas { display: block; }
   font-family:var(--mono); font-size:8px;
   border-bottom:1px solid rgba(255,179,0,0.06); }
 .gold-log-row:last-child { border-bottom:none; }
+
+/* ── GOLD COLUMN ── */
+.gold-col {
+  background: var(--surface);
+  border-left-DISABLED: 2px solid var(--gold2);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: inset 2px 0 20px rgba(255,179,0,0.03);
+}
+.gold-col-hdr {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255,179,0,0.2);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: rgba(255,179,0,0.03);
+}
+.gold-col-ttl {
+  font-family: var(--mono); font-size: 8px;
+  letter-spacing: 0.2em; color: var(--gold);
+  text-transform: uppercase;
+}
+.gold-ref-btn {
+  padding: 3px 9px;
+  background: rgba(255,179,0,0.1);
+  border: 1px solid var(--gold2);
+  border-radius: 4px; color: var(--gold);
+  font-family: var(--mono); font-size: 9px;
+  cursor: pointer; transition: all 0.15s;
+}
+.gold-ref-btn:hover { background: rgba(255,179,0,0.2); }
+.gold-sig-body {
+  padding: 11px; flex: 1; overflow-y: auto;
+}
+.gold-wait {
+  text-align: center; padding: 36px 10px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text3); line-height: 2.4;
+}
+.gold-dir {
+  font-family: var(--display); font-size: 38px;
+  letter-spacing: 0.05em; line-height: 1;
+  margin-bottom: 3px; color: var(--gold);
+}
+.gold-meta {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--text3); margin-bottom: 10px;
+}
+.gold-cards {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px; margin-bottom: 9px;
+}
+.gold-card {
+  background: rgba(255,179,0,0.05);
+  border-radius: 5px; padding: 6px 7px;
+  border: 1px solid rgba(255,179,0,0.2);
+}
+.gc-lbl { font-family: var(--mono); font-size: 8px; color: var(--text3); margin-bottom: 2px; }
+.gc-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--gold); }
+.gold-plvl {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 9px; border-radius: 5px; margin-bottom: 4px;
+  font-family: var(--mono); font-size: 10px;
+}
+.gold-plvl-lbl { font-size: 8px; font-weight: 700; }
+.gold-plvl-px  { font-size: 12px; font-weight: 700; }
+.gold-plvl-r   { font-size: 8px; }
+.gl-stop  { background: rgba(255,61,90,0.1);   border: 1px solid rgba(255,61,90,0.3); }
+.gl-entry { background: rgba(255,179,0,0.08);  border: 1px solid rgba(255,179,0,0.3); }
+.gl-tp    { background: rgba(0,230,118,0.06);  border: 1px solid rgba(0,230,118,0.2); }
+.gold-hr {
+  background: rgba(255,179,0,0.07);
+  border: 1px solid rgba(255,179,0,0.2);
+  border-radius: 3px; padding: 2px 6px;
+  font-family: var(--mono); font-size: 8px; color: var(--gold);
+}
+.gold-hr.active {
+  background: rgba(255,179,0,0.25);
+  color: #fff; border-color: var(--gold);
+}
+.gold-hist-wrap {
+  border-top: 1px solid rgba(255,179,0,0.15);
+  flex-shrink: 0; max-height: 130px; overflow-y: auto;
+}
+.gold-hist-hdr {
+  padding: 7px 11px 5px;
+  font-family: var(--mono); font-size: 8px;
+  letter-spacing: 0.12em; color: var(--gold);
+  text-transform: uppercase;
+  display: flex; justify-content: space-between;
+  position: sticky; top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid rgba(255,179,0,0.1);
+}
+.gold-stats-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 4px; padding: 8px 11px; border-top: 1px solid rgba(255,179,0,0.1);
+  flex-shrink: 0;
+}
+.gold-stat-box {
+  background: rgba(255,179,0,0.05);
+  border: 1px solid rgba(255,179,0,0.15);
+  border-radius: 4px; padding: 5px 4px; text-align: center;
+}
+.gsb-val { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--gold); }
+.gsb-lbl { font-size: 7px; color: var(--text3); text-transform: uppercase; margin-top: 1px; }
 </style>
 </head>
 <body>
@@ -769,42 +867,45 @@ canvas { display: block; }
 <!-- BODY -->
 <div class="body-grid">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div>
-      <div class="sb-ttl" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Strategy</span>
-        <span id="autoStratBadge" style="font-family:var(--mono);font-size:7px;
-          color:var(--green);background:rgba(0,230,118,0.1);border:1px solid var(--green2);
-          border-radius:3px;padding:1px 5px;letter-spacing:0.06em;display:none">AUTO</span>
+  <!-- GOLD SIGNAL COLUMN (LEFT) -->
+  <div class="gold-col" id="goldCol" style="border-right:2px solid var(--gold2);border-left:none">
+    <div class="gold-col-hdr">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse 2s infinite"></div>
+        <span class="gold-col-ttl">GOLD SIGNAL</span>
       </div>
-      <div id="activeStratLabel" style="font-family:var(--mono);font-size:9px;
-        color:var(--accent);background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);
-        border-radius:4px;padding:4px 7px;margin-bottom:4px;text-align:center">
-        LIVE: <span id="activeStratName" style="font-weight:700">BTC-H</span>
-        <span id="activeStratDetail" style="color:var(--text3);font-size:8px"> · A+B · 1.0/wk</span>
-      </div>
-      <div id="autoStratInfo" style="font-family:var(--mono);font-size:8px;color:var(--text3);
-        margin-bottom:5px;padding:4px 6px;background:var(--panel);border-radius:4px;display:none">
-        Auto-selected based on session hour
-      </div>
-      <div class="strat-grid">
-        <div class="strat-btn active" id="btn-BTC_H" onclick="selectStrategy('BTC_H')" title="BTC-H — Aggressive: All params loosened, Grade A+B, 1.0 trade/week">
-          <div class="sn" style="font-size:8px">BTC-H</div>
-          <div class="sa">A+B · All params · 1.0/wk</div>
-          <div class="sw">64.1%</div>
+      <button class="gold-ref-btn" onclick="fetchGoldSignal()">REFRESH</button>
+    </div>
+    <div class="gold-sig-body" id="goldSigBody" style="flex:1;overflow-y:auto;padding:11px">
+      <div class="wait-state">
+        <div style="font-size:26px;opacity:0.25;margin-bottom:6px;color:var(--gold)">◈</div>
+        <div style="color:var(--gold)">NO SIGNAL</div>
+        <div style="font-size:9px;margin-top:5px">Click REFRESH to scan now</div>
+        <div style="margin-top:14px;font-size:9px">Session hours:<br>
+          <span style="color:var(--gold)">02 · 04 · 09 · 11 · 16 · 17 · 23 UTC</span>
         </div>
-
-
       </div>
     </div>
-    <div>
-      <div class="sb-ttl">Session Hours (UTC)</div>
-      <div id="sessHours" style="font-family:var(--mono);font-size:10px;color:var(--accent);line-height:2.2">—</div>
-      <div id="sessCountdown" style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px"></div>
+    <div style="padding:6px 10px;border-top:1px solid rgba(255,179,0,0.15);flex-shrink:0;display:flex;gap:3px;flex-wrap:wrap">
+      <div class="gold-hr" id="gh2">02</div>
+      <div class="gold-hr" id="gh4">04</div>
+      <div class="gold-hr" id="gh9">09</div>
+      <div class="gold-hr" id="gh11">11</div>
+      <div class="gold-hr" id="gh16">16</div>
+      <div class="gold-hr" id="gh17">17</div>
+      <div class="gold-hr" id="gh23">23</div>
     </div>
-    <div style="margin-top:auto;display:flex;flex-direction:column;gap:5px">
-      <button class="sb-btn sb-sec" onclick="showReview()">TRADE REVIEW</button>
+    <div class="gold-stats-row" id="goldStatsRow">
+      <div class="gold-stat-box"><div class="gsb-val">38.5%</div><div class="gsb-lbl">WR OOS</div></div>
+      <div class="gold-stat-box"><div class="gsb-val">+0.161</div><div class="gsb-lbl">Avg R</div></div>
+      <div class="gold-stat-box"><div class="gsb-val">205</div><div class="gsb-lbl">Trades</div></div>
+    </div>
+    <div class="gold-hist-wrap" id="goldHistWrap">
+      <div class="gold-hist-hdr">
+        <span>Paper Trade Log</span>
+        <span id="goldHistCount" style="color:var(--text3)">0 trades</span>
+      </div>
+      <div id="goldHistBody"><div class="h-empty">No trades yet</div></div>
     </div>
   </div>
 
@@ -831,7 +932,10 @@ canvas { display: block; }
   <!-- SIGNAL COLUMN -->
   <div class="sig-col">
     <div class="sig-col-hdr">
-      <span class="sig-col-ttl">Live Signal</span>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="sig-col-ttl">BTC Live Signal</span>
+        <span id="activeStratDetail2" style="font-family:var(--mono);font-size:7px;color:var(--accent)">A+B · 1.0/wk · hrs 7,12,14,18</span>
+      </div>
       <button class="ref-btn" onclick="fetchSig()">REFRESH</button>
     </div>
     <!-- Open trade banner -->
@@ -853,101 +957,71 @@ canvas { display: block; }
     </div>
     </div><!-- end sigBody -->
 
-    <!-- Permanent action buttons - always visible -->
-    <div style="padding:10px 11px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
-      <div style="font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;margin-bottom:7px">Your Decision</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px">
-        <button class="act-took" id="btnTook" onclick="showTradeForm()">I TOOK THIS TRADE</button>
-        <button class="act-skip" id="btnSkip" onclick="showSkipForm()">SKIP THIS SIGNAL</button>
-      </div>
-      <button class="act-dis" onclick="dismissSig()">DISMISS — do not record</button>
-      <button class="ai-btn" onclick="showToast('AI Assessment — coming soon','var(--purple)')">✦ AI DEEP ASSESSMENT</button>
-    </div>
-
-    <!-- Automation control panel -->
-    <div class="auto-panel" id="autoPanel">
-      <div class="auto-status-row">
-        <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase">Automation</span>
-        <span class="auto-badge auto-disarmed" id="autoBadge">DISARMED</span>
-      </div>
-      <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:7px" id="autoInfo">
-        Off — manual trading mode
-      </div>
-      <div class="auto-grid">
-        <button class="auto-btn auto-arm-btn" onclick="showArmModal()">ARM AUTO</button>
-        <button class="auto-btn auto-dis-btn" onclick="disarmAuto()">DISARM</button>
-      </div>
-      <button class="auto-stop-btn" style="margin-top:5px" onclick="confirmEmergencyStop()">
-        ⚠ EMERGENCY STOP ALL
-      </button>
-    </div>
-
-    <!-- GOLD PANEL -->
-    <div class="gold-section" id="goldSection">
-      <div class="gold-hdr">
-        <div class="gold-hdr-title">🏅 GOLD · XAUUSD · FVG Strategy</div>
-        <button onclick="toggleGold()" id="goldToggle"
-          style="background:none;border:1px solid rgba(255,179,0,0.3);border-radius:3px;
-            color:var(--gold);font-family:var(--mono);font-size:7px;padding:2px 6px;cursor:pointer">
-          HIDE
-        </button>
-      </div>
-      <div id="goldBody">
-        <div class="gold-stat-row">
-          <div class="gold-stat">
-            <div class="gold-stat-val" id="gWR">38.5%</div>
-            <div class="gold-stat-lbl">WR (OOS)</div>
-          </div>
-          <div class="gold-stat">
-            <div class="gold-stat-val" id="gAvgR">+0.161</div>
-            <div class="gold-stat-lbl">Avg R</div>
-          </div>
-          <div class="gold-stat">
-            <div class="gold-stat-val" id="gRet">+55%</div>
-            <div class="gold-stat-lbl">Return</div>
-          </div>
-          <div class="gold-stat">
-            <div class="gold-stat-val" id="gTrades">205</div>
-            <div class="gold-stat-lbl">Trades</div>
-          </div>
-        </div>
-        <div class="gold-sig-box">
-          <div class="gold-sig-ttl" id="gSigTtl">⏳ SCANNING...</div>
-          <div id="gSigBody" style="color:var(--text3);font-size:8px">
-            Fetching live XAUUSD signal...
-          </div>
-        </div>
-        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);
-          padding:0 11px 3px;letter-spacing:0.1em">SESSION HOURS (UTC)</div>
-        <div class="gold-hours-row">
-          <div class="gold-hr" id="gh2">02</div>
-          <div class="gold-hr" id="gh4">04</div>
-          <div class="gold-hr" id="gh9">09</div>
-          <div class="gold-hr" id="gh11">11</div>
-          <div class="gold-hr" id="gh16">16</div>
-          <div class="gold-hr" id="gh17">17</div>
-          <div class="gold-hr" id="gh23">23</div>
-        </div>
-        <div style="font-family:var(--mono);font-size:7px;color:var(--text3);
-          padding:0 11px 3px;letter-spacing:0.1em">PAPER TRADE LOG</div>
-        <div class="gold-log" id="goldLog">
-          <div style="color:var(--text3);font-size:8px;padding:3px 0">No trades yet</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Trade history -->
-    <div class="hist-wrap" id="histWrap">
-      <div class="hist-hdr">
-        <span>Trade History</span>
-        <span id="histCount" style="color:var(--text3)">0 trades</span>
-      </div>
-      <div id="histBody"><div class="h-empty">No trades yet</div></div>
-    </div>
-
   </div><!-- end sig-col -->
 
 </div><!-- end body-grid -->
+<div id="sessHours" style="display:none"></div>
+<div id="goldToggle" style="display:none"></div>
+<div id="activeStratName" style="display:none"></div>
+<div id="activeStratDetail" style="display:none"></div>
+<div id="autoStratBadge" style="display:none"></div>
+<div id="autoStratInfo" style="display:none"></div>
+<div id="goldBody" style="display:none"></div>
+<div id="gSigTtl" style="display:none"></div>
+<div id="mmSel" style="display:none"></div>
+<div id="mmRecommend" style="display:none"></div>
+<div id="mmRecLabel" style="display:none"></div>
+<div id="mmRecReason" style="display:none"></div>
+<div id="levWarn" style="display:none"></div>
+<div id="tcEntry" style="display:none"></div>
+<div id="tcSide" style="display:none"></div>
+<div id="tcRes" style="display:none"></div>
+<div id="handoffBtn" style="display:none"></div>
+<div id="sessCountdown" style="display:none"></div>
+<div id="calcTbl" style="display:none"></div>
+<!-- BOTTOM BAR: Automation + Decisions + History -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid var(--border);background:var(--surface);flex-shrink:0;max-height:180px;overflow:hidden">
+
+  <!-- Permanent action buttons - always visible -->
+  <div style="padding:10px 11px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
+    <div style="font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;margin-bottom:7px">Your Decision</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px">
+      <button class="act-took" id="btnTook" onclick="showTradeForm()">I TOOK THIS TRADE</button>
+      <button class="act-skip" id="btnSkip" onclick="showSkipForm()">SKIP THIS SIGNAL</button>
+    </div>
+    <button class="act-dis" onclick="dismissSig()">DISMISS — do not record</button>
+    <button class="ai-btn" onclick="showToast('AI Assessment — coming soon','var(--purple)')">✦ AI DEEP ASSESSMENT</button>
+  </div>
+
+  <!-- Automation control panel -->
+  <div class="auto-panel" id="autoPanel">
+    <div class="auto-status-row">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase">Automation</span>
+      <span class="auto-badge auto-disarmed" id="autoBadge">DISARMED</span>
+    </div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:7px" id="autoInfo">
+        Off — manual trading mode
+    </div>
+    <div class="auto-grid">
+      <button class="auto-btn auto-arm-btn" onclick="showArmModal()">ARM AUTO</button>
+      <button class="auto-btn auto-dis-btn" onclick="disarmAuto()">DISARM</button>
+    </div>
+    <button class="auto-stop-btn" style="margin-top:5px" onclick="confirmEmergencyStop()">
+        ⚠ EMERGENCY STOP ALL
+    </button>
+  </div>
+
+  <!-- Trade history -->
+  <div class="hist-wrap" id="histWrap">
+    <div class="hist-hdr">
+      <span>Trade History</span>
+      <span id="histCount" style="color:var(--text3)">0 trades</span>
+    </div>
+    <div id="histBody"><div class="h-empty">No trades yet</div></div>
+  </div>
+
+
+</div>
 
 <script>
 // ── STATE ─────────────────────────────────────────────────
@@ -1010,68 +1084,109 @@ function fetchGoldSignal() {
     })
     .catch(function(){
       document.getElementById('gSigTtl').textContent = '⏳ MONITOR STARTING...';
-      document.getElementById('gSigBody').innerHTML =
+      document.getElementById('goldSigBody').innerHTML =
         '<span style="color:var(--text3)">Gold monitor not yet running on VPS</span>';
     });
 }
 
 function renderGoldSignal(data) {
-  var ttl  = document.getElementById('gSigTtl');
-  var body = document.getElementById('gSigBody');
-  var log  = document.getElementById('goldLog');
+  var body = document.getElementById('goldSigBody');
+  var histBody = document.getElementById('goldHistBody');
+  var histCount = document.getElementById('goldHistCount');
+  if(!body) return;
 
-  // Signal status
-  var sig = data.open_trade || null;
+  var sig   = data.open_trade || null;
   var state = data.monitor_state || 'SCAN';
+  var ft    = data.fvg_top, fb = data.fvg_bottom;
 
   if(sig) {
-    ttl.textContent = '🏅 OPEN TRADE';
-    ttl.style.color = 'var(--gold)';
+    // ── OPEN TRADE — big signal like BTC ──
+    var sd = sig.entry_price - sig.stop_loss;
+    var rr = sd > 0 ? ((sig.take_profit - sig.entry_price)/sd).toFixed(1) : '?';
     body.innerHTML =
-      '<div class="gold-sig-row"><span>Entry</span><span style="color:var(--accent)">$'+parseFloat(sig.entry_price).toFixed(2)+'</span></div>'+
-      '<div class="gold-sig-row"><span>Stop</span><span style="color:var(--red)">$'+parseFloat(sig.stop_loss).toFixed(2)+'</span></div>'+
-      '<div class="gold-sig-row"><span>TP</span><span style="color:var(--green)">$'+parseFloat(sig.take_profit).toFixed(2)+'</span></div>'+
-      '<div class="gold-sig-row"><span>R to TP</span><span style="color:var(--gold)">'+sig.r_to_tp+'R</span></div>'+
-      '<div class="gold-sig-row"><span>Since</span><span>'+sig.timestamp+'</span></div>';
-  } else if(state==='WAITING') {
-    var ft = data.fvg_top, fb = data.fvg_bottom;
-    ttl.textContent = '📐 FVG DETECTED — WAITING';
-    ttl.style.color = 'var(--gold)';
+      '<div class="gold-dir">🏅 LONG</div>'+
+      '<div class="gold-meta">XAUUSD · 15m · FVG Retest · Paper Trade</div>'+
+      '<div class="gold-cards">'+
+        '<div class="gold-card"><div class="gc-lbl">Grade</div><div class="gc-val">FVG</div></div>'+
+        '<div class="gold-card"><div class="gc-lbl">R to TP</div><div class="gc-val">'+sig.r_to_tp+'R</div></div>'+
+      '</div>'+
+      '<div class="gold-plvl gl-stop">'+
+        '<span class="gold-plvl-lbl" style="color:var(--red)">STOP LOSS</span>'+
+        '<span class="gold-plvl-px" style="color:var(--red)">$'+parseFloat(sig.stop_loss).toFixed(2)+'</span>'+
+        '<span class="gold-plvl-r" style="color:var(--red)">-1.0R</span>'+
+      '</div>'+
+      '<div class="gold-plvl gl-entry">'+
+        '<span class="gold-plvl-lbl" style="color:var(--gold)">ENTRY</span>'+
+        '<span class="gold-plvl-px" style="color:var(--gold)">$'+parseFloat(sig.entry_price).toFixed(2)+'</span>'+
+        '<span class="gold-plvl-r">paper</span>'+
+      '</div>'+
+      '<div class="gold-plvl gl-tp">'+
+        '<span class="gold-plvl-lbl" style="color:var(--green)">TAKE PROFIT</span>'+
+        '<span class="gold-plvl-px" style="color:var(--green)">$'+parseFloat(sig.take_profit).toFixed(2)+'</span>'+
+        '<span class="gold-plvl-r" style="color:var(--green)">+'+rr+'R</span>'+
+      '</div>'+
+      '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:8px">Since: '+sig.timestamp+'</div>';
+
+  } else if(state==='WAITING' && ft && fb) {
+    // ── FVG DETECTED ──
     body.innerHTML =
-      '<div class="gold-sig-row"><span>FVG Zone</span><span style="color:var(--gold)">$'+(fb||0).toFixed(2)+' → $'+(ft||0).toFixed(2)+'</span></div>'+
-      '<div class="gold-sig-row"><span>Status</span><span>Waiting for retest...</span></div>';
+      '<div class="gold-dir" style="font-size:28px;color:var(--gold)">📐 WAITING</div>'+
+      '<div class="gold-meta">FVG detected — watching for retest</div>'+
+      '<div class="gold-plvl gl-entry" style="margin-top:10px">'+
+        '<span class="gold-plvl-lbl" style="color:var(--gold)">FVG TOP</span>'+
+        '<span class="gold-plvl-px" style="color:var(--gold)">$'+parseFloat(ft).toFixed(2)+'</span>'+
+      '</div>'+
+      '<div class="gold-plvl gl-stop">'+
+        '<span class="gold-plvl-lbl" style="color:var(--text3)">FVG BOTTOM</span>'+
+        '<span class="gold-plvl-px" style="color:var(--text3)">$'+parseFloat(fb).toFixed(2)+'</span>'+
+      '</div>'+
+      '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:10px;text-align:center">Waiting for wick to enter zone...</div>';
+
   } else {
-    ttl.textContent = '⏳ SCANNING';
-    ttl.style.color = 'var(--text3)';
-    body.innerHTML = '<span style="color:var(--text3);font-size:8px">No active setup — monitoring session hours</span>';
+    // ── SCANNING ──
+    body.innerHTML =
+      '<div class="gold-wait">'+
+        '<div style="font-size:26px;opacity:0.3;margin-bottom:8px">◈</div>'+
+        '<div>Scanning for GOLD setup</div>'+
+        '<div style="font-size:9px;margin-top:5px;color:var(--text3)">FVG Retest · LONG only</div>'+
+        '<div style="margin-top:14px;font-size:9px">Session hours:<br>'+
+        '<span style="color:var(--gold)">02 · 04 · 09 · 11 · 16 · 17 · 23 UTC</span></div>'+
+      '</div>';
   }
 
-  // Stats from data
-  if(data.stats) {
-    var s = data.stats;
-    var gwr = document.getElementById('gWR');
-    var gav = document.getElementById('gAvgR');
-    var gtr = document.getElementById('gTrades');
-    if(gwr) gwr.textContent = s.wr+'%';
-    if(gav) gav.textContent = (s.avg_r>0?'+':'')+s.avg_r;
-    if(gtr) gtr.textContent = s.total;
+  // Stats row
+  var stats = data.stats || {};
+  var statsEl = document.getElementById('goldStatsRow');
+  if(statsEl) {
+    statsEl.innerHTML =
+      '<div class="gold-stat-box"><div class="gsb-val">'+((stats.wr||0)+'%')+'</div><div class="gsb-lbl">WR</div></div>'+
+      '<div class="gold-stat-box"><div class="gsb-val">'+(stats.avg_r>0?'+':'')+((stats.avg_r||0).toFixed ? (stats.avg_r||0).toFixed(3) : stats.avg_r||0)+'</div><div class="gsb-lbl">Avg R</div></div>'+
+      '<div class="gold-stat-box"><div class="gsb-val">'+(stats.total||0)+'</div><div class="gsb-lbl">Trades</div></div>';
   }
 
   // Trade log
   var trades = data.trades || [];
-  if(trades.length === 0) {
-    log.innerHTML = '<div style="color:var(--text3);font-size:8px;padding:3px 0">No trades yet</div>';
-  } else {
-    log.innerHTML = trades.slice(-6).reverse().map(function(t){
-      var color = t.status==='WIN'?'var(--green)':t.status==='LOSS'?'var(--red)':'var(--gold)';
-      var r = t.r_multiple!=null ? (parseFloat(t.r_multiple)>0?'+':'')+parseFloat(t.r_multiple).toFixed(2)+'R' : 'OPEN';
-      return '<div class="gold-log-row">'+
-        '<span style="color:var(--text3)">'+(t.timestamp||'').slice(5,16)+'</span>'+
-        '<span>$'+parseFloat(t.entry_price).toFixed(0)+'</span>'+
-        '<span style="color:'+color+'">'+t.status+'</span>'+
-        '<span style="color:'+color+'">'+r+'</span>'+
-        '</div>';
-    }).join('');
+  if(histCount) histCount.textContent = trades.length + ' trades';
+  if(histBody) {
+    if(!trades.length) {
+      histBody.innerHTML = '<div class="h-empty">No trades yet — monitoring</div>';
+    } else {
+      var tbl = '<table class="h-tbl"><tr>'+
+        '<td style="color:var(--text3)">Time</td>'+
+        '<td style="color:var(--text3)">Entry</td>'+
+        '<td style="color:var(--text3)">Status</td>'+
+        '<td style="color:var(--text3)">R</td></tr>';
+      trades.slice(-8).reverse().forEach(function(t){
+        var color = t.status==="WIN"?"var(--green)":t.status==="LOSS"?"var(--red)":"var(--gold)";
+        var r = t.r_multiple!=null ? (parseFloat(t.r_multiple)>0?"+":"")+parseFloat(t.r_multiple).toFixed(2)+"R" : "OPEN";
+        tbl += '<tr><td>'+(t.timestamp||"").slice(5,16)+'</td>'+
+          '<td>$'+parseFloat(t.entry_price||0).toFixed(0)+'</td>'+
+          '<td style="color:'+color+'">'+t.status+'</td>'+
+          '<td style="color:'+color+'">'+r+'</td></tr>';
+      });
+      tbl += '</table>';
+      histBody.innerHTML = tbl;
+    }
   }
 }
 
@@ -1275,7 +1390,7 @@ function updateSessHours() {
   var mktSess = getMarketSession(nowH);
   var inSess  = info.hours.includes(nowH);
 
-  document.getElementById('sessHours').innerHTML=
+  var _sh=document.getElementById('sessHours'); if(_sh) _sh.innerHTML=
     parts
     +'<div style="margin-top:5px;font-size:8px;padding:3px 6px;background:var(--panel);border-radius:4px;display:inline-block">'
     +'<span style="color:var(--text3)">Market: </span>'

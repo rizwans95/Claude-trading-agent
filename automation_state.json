@@ -1,6 +1,37 @@
 {
   "armed": true,
-  "active_trades": {},
+  "active_trades": {
+    "AUTO-1779970021": {
+      "signal_id": "AUTO-1779970021",
+      "symbol": "BTCUSDT",
+      "kc_symbol": "XBTUSDTM",
+      "strategy": "AUTO",
+      "direction": "LONG",
+      "contracts": 2,
+      "entry_price": 73490.0,
+      "stop_price": 72974.3793,
+      "stop_order_id": null,
+      "tp1": {
+        "order_id": "449448309522759681",
+        "price": 74205.1,
+        "qty": 1,
+        "hit": false
+      },
+      "tp2": {
+        "order_id": "449448311544430592",
+        "price": 74964.0,
+        "qty": 1,
+        "hit": false
+      },
+      "tp3": {},
+      "leverage": 10,
+      "balance_at_entry": 54.8828785104,
+      "risk_pct": 0.02,
+      "status": "OPEN",
+      "opened_at": "2026-05-28T12:07:09.968049+00:00",
+      "trailing_stop_moved": false
+    }
+  },
   "leverage": 10,
   "risk_pct": 0.02,
   "last_signal": null,

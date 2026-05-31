@@ -1,0 +1,2 @@
+signal_id,timestamp,utc_hour,symbol,direction,entry_price,stop_loss,take_profit,fvg_top,fvg_bottom,r_to_tp,status,exit_price,exit_time,r_multiple,pnl_usd,bars_held,notes
+GOLD-0001,2026-05-29 09:46,9,XAUUSD,LONG,4557.89990234375,4542.35,4604.55,4557.7001953125,4546.89990234375,3.0,OPEN,,,,,0,FVG retest | SL dist=15.55

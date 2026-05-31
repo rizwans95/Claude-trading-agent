@@ -152,10 +152,16 @@ def get_daily_tp(df, bar_index, entry_price, stop_loss):
 
 def load_log():
     if os.path.exists(LOG_FILE):
-        df = pd.read_csv(LOG_FILE)
+        # Read all as object to avoid dtype inference issues
+        df = pd.read_csv(LOG_FILE, dtype=object)
         for col in LOG_COLUMNS:
             if col not in df.columns:
                 df[col] = None
+        # Convert numeric columns explicitly — leave string cols as-is
+        for col in ["entry_price","stop_loss","take_profit","fvg_top","fvg_bottom",
+                    "r_to_tp","r_multiple","pnl_usd","exit_price","utc_hour","bars_held"]:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
         return df
     return pd.DataFrame(columns=LOG_COLUMNS)
 
@@ -268,10 +274,14 @@ def update_open_trades(df, config):
 
     updated = 0
     for idx, trade in open_trades.iterrows():
-        entry = float(trade["entry_price"])
-        sl    = float(trade["stop_loss"])
-        tp    = float(trade["take_profit"])
-        bars_held = int(trade.get("bars_held") or 0) + 1
+        try:
+            entry     = float(trade["entry_price"])
+            sl        = float(trade["stop_loss"])
+            tp        = float(trade["take_profit"])
+            bars_held = int(float(trade["bars_held"] or 0)) + 1
+        except Exception as e:
+            print(f"  [WARN] Could not parse trade {trade.get('signal_id')}: {e}")
+            continue
 
         df.at[idx, "bars_held"] = bars_held
 
@@ -281,10 +291,10 @@ def update_open_trades(df, config):
             pnl = round(PAPER_BALANCE * PAPER_RISK * r, 2)
             df.at[idx, "status"]     = "LOSS"
             df.at[idx, "exit_price"] = sl
-            df.at[idx, "exit_time"]  = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+            df.at[idx, "exit_time"] = str(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"))
             df.at[idx, "r_multiple"] = r
-            df.at[idx, "pnl_usd"]    = pnl
-            df.at[idx, "notes"]      = f"SL hit @ {current_price:.2f}"
+            df.at[idx, "pnl_usd"] = pnl
+            df.at[idx, "notes"] = str(f"SL hit @ {current_price:.2f}")
             tg_trade_closed(trade["signal_id"], entry, sl, r, pnl, config)
             print(f"  [LOSS] {trade['signal_id']} SL hit @ {current_price:.2f}")
             updated += 1
@@ -296,10 +306,10 @@ def update_open_trades(df, config):
             pnl = round(PAPER_BALANCE * PAPER_RISK * r, 2)
             df.at[idx, "status"]     = "WIN"
             df.at[idx, "exit_price"] = tp
-            df.at[idx, "exit_time"]  = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+            df.at[idx, "exit_time"] = str(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"))
             df.at[idx, "r_multiple"] = r
-            df.at[idx, "pnl_usd"]    = pnl
-            df.at[idx, "notes"]      = f"TP hit @ {current_price:.2f}"
+            df.at[idx, "pnl_usd"] = pnl
+            df.at[idx, "notes"] = str(f"TP hit @ {current_price:.2f}")
             tg_trade_closed(trade["signal_id"], entry, tp, r, pnl, config)
             print(f"  [WIN]  {trade['signal_id']} TP hit @ {current_price:.2f} ({r:+.2f}R)")
             updated += 1
@@ -310,12 +320,12 @@ def update_open_trades(df, config):
             r   = round((current_price - entry) / sd, 3) if sd > 0 else 0
             pnl = round(PAPER_BALANCE * PAPER_RISK * r, 2)
             status = "WIN" if r > 0 else "LOSS"
-            df.at[idx, "status"]     = status
+            df.at[idx, "status"] = str(status)
             df.at[idx, "exit_price"] = current_price
-            df.at[idx, "exit_time"]  = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+            df.at[idx, "exit_time"] = str(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"))
             df.at[idx, "r_multiple"] = r
-            df.at[idx, "pnl_usd"]    = pnl
-            df.at[idx, "notes"]      = f"Max hold timeout @ {current_price:.2f}"
+            df.at[idx, "pnl_usd"] = pnl
+            df.at[idx, "notes"] = str(f"Max hold timeout @ {current_price:.2f}")
             tg_trade_closed(trade["signal_id"], entry, current_price, r, pnl, config)
             print(f"  [TIMEOUT] {trade['signal_id']} closed @ {current_price:.2f} ({r:+.2f}R)")
             updated += 1
@@ -461,8 +471,10 @@ def scan_once(config):
     open_count = len(df[df["status"] == "OPEN"])
     if open_count > 0:
         open_trade = df[df["status"] == "OPEN"].iloc[-1]
-        print(f"  Open trade: {open_trade['signal_id']} LONG @ {open_trade['entry_price']:.2f} "
-              f"SL={open_trade['stop_loss']:.2f} TP={open_trade['take_profit']:.2f}")
+        print(f"  Open trade: {open_trade['signal_id']} LONG @ "
+              f"{float(open_trade['entry_price']):.2f} "
+              f"SL={float(open_trade['stop_loss']):.2f} "
+              f"TP={float(open_trade['take_profit']):.2f}")
         return
 
     # Fetch live data

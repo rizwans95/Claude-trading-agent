@@ -235,38 +235,23 @@ def place_limit_order(config, kucoin_symbol, side, qty, price, reduce_only=False
 
 def place_stop_order(config, kucoin_symbol, side, qty, stop_price, reduce_only=True):
     """
-    Place a stop-loss order using KuCoin /api/v1/st-orders endpoint.
-    Uses triggerStopDownPrice for LONG stop (sell side)
-    Uses triggerStopUpPrice  for SHORT stop (buy side)
-    Triggers on mark price (TP).
+    Place a stop-market order (stop loss).
+    Triggers at stop_price and closes at market.
     """
     import uuid
-    stop_px = str(round(round(stop_price * 10) / 10, 1))  # BTC tick = 0.1
-
-    # For LONG (side=sell): stop triggers when price falls to stop_price
-    # For SHORT (side=buy): stop triggers when price rises to stop_price
-    if side == "sell":
-        trigger_key = "triggerStopDownPrice"
-    else:
-        trigger_key = "triggerStopUpPrice"
-
     body = {
-        "clientOid":    str(uuid.uuid4()),
-        "symbol":       kucoin_symbol,
-        "side":         side,
-        "type":         "market",
-        "size":         int(qty),
-        "reduceOnly":   reduce_only,
-        "marginMode":   "ISOLATED",
-        "positionSide": "BOTH",
-        "stopPriceType": "TP",   # mark price trigger
-        trigger_key:    stop_px,
+        "clientOid":   str(uuid.uuid4()),
+        "symbol":      kucoin_symbol,
+        "side":        side,
+        "type":        "market",
+        "stop":        "down" if side == "sell" else "up",
+        "stopPrice":   str(round(round(stop_price * 10) / 10, 1)),  # BTC tick=0.1
+        "stopPriceType": "MP",   # trigger on mark price (correct for stop loss)
+        "size":        int(qty),
+        "reduceOnly":  reduce_only,
     }
-    result = api_post(config, "/api/v1/st-orders", body)
-    order_id = result.get("orderId")
-    if not order_id:
-        raise RuntimeError(f"st-orders API returned no orderId: {result}")
-    return order_id
+    result = api_post(config, "/api/v1/stop-orders", body)
+    return result.get("orderId")
 
 
 def cancel_order(config, order_id):
@@ -280,9 +265,9 @@ def cancel_order(config, order_id):
 
 
 def cancel_stop_order(config, order_id):
-    """Cancel a stop order using new st-orders endpoint."""
+    """Cancel a stop order."""
     try:
-        api_delete(config, f"/api/v1/st-orders/{order_id}")
+        api_delete(config, f"/api/v1/stop-orders/{order_id}")
         return True
     except Exception as e:
         print(f"  [Cancel stop {order_id} failed: {e}]")
@@ -290,9 +275,9 @@ def cancel_stop_order(config, order_id):
 
 
 def cancel_all_stop_orders(config, kucoin_symbol):
-    """Cancel all stop orders for a symbol using new st-orders endpoint."""
+    """Cancel all stop orders for a symbol."""
     try:
-        api_delete(config, f"/api/v1/st-orders?symbol={kucoin_symbol}")
+        api_delete(config, f"/api/v1/stop-orders?symbol={kucoin_symbol}")
         return True
     except Exception as e:
         print(f"  [Cancel all stops failed: {e}]")
@@ -300,38 +285,23 @@ def cancel_all_stop_orders(config, kucoin_symbol):
 
 
 def close_position_market(config, kucoin_symbol):
-    """
-    Close entire position at market price.
-    Includes all required fields for KuCoin API v2.
-    """
+    """Close entire position at market price."""
     import uuid
     pos = get_position(config, kucoin_symbol)
     if not pos:
-        print(f"  [close_position_market] No position found for {kucoin_symbol}")
         return None
-    qty_raw = float(pos.get("currentQty", 0))
-    if qty_raw == 0:
-        print(f"  [close_position_market] Position already flat")
-        return None
-    qty  = abs(int(qty_raw))
-    side = "sell" if qty_raw > 0 else "buy"
+    qty  = abs(int(float(pos.get("currentQty", 0))))
+    side = "sell" if float(pos.get("currentQty", 0)) > 0 else "buy"
     body = {
-        "clientOid":    str(uuid.uuid4()),
-        "symbol":       kucoin_symbol,
-        "side":         side,
-        "type":         "market",
-        "size":         qty,
-        "reduceOnly":   True,
-        "marginMode":   "ISOLATED",
-        "positionSide": "BOTH",
+        "clientOid":  str(uuid.uuid4()),
+        "symbol":     kucoin_symbol,
+        "side":       side,
+        "type":       "market",
+        "size":       qty,
+        "reduceOnly": True,
     }
     result = api_post(config, "/api/v1/orders", body)
-    order_id = result.get("orderId")
-    if order_id:
-        print(f"  [close_position_market] Closed {qty} contracts, orderId={order_id}")
-    else:
-        print(f"  [close_position_market] Close failed: {result}")
-    return order_id
+    return result.get("orderId")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -540,62 +510,15 @@ def execute_trade(config, signal, state):
             except Exception: pass
         return False
 
-    # ── Place stop loss order — MANDATORY, retry 3x, abort if all fail ──
-    stop_side     = "sell" if direction == "LONG" else "buy"
-    stop_order_id = None
+    # ── Place stop loss order ────────────────────────────────
+    stop_side = "sell" if direction == "LONG" else "buy"
     print(f"  Placing stop @ ${stop_price:,.2f}...")
-    for attempt in range(1, 4):
-        try:
-            stop_order_id = place_stop_order(
-                config, kc_symbol, stop_side, contracts, stop_price
-            )
-            if stop_order_id:
-                print(f"  [OK] Stop placed (attempt {attempt}): {stop_order_id}")
-                break
-            else:
-                raise RuntimeError("API returned no orderId for stop order")
-        except Exception as e:
-            print(f"  [WARN] Stop attempt {attempt}/3 failed: {e}")
-            if attempt < 3:
-                time.sleep(2)
-
-    # ── CRITICAL: if stop could not be placed, close position immediately ──
-    if not stop_order_id:
-        print(f"  [CRITICAL] Stop loss FAILED after 3 attempts.")
-        print(f"  [CRITICAL] Closing position at market to protect capital.")
-        closed = False
-        for close_attempt in range(1, 4):
-            try:
-                close_id = close_position_market(config, kc_symbol)
-                if close_id:
-                    print(f"  [OK] Position emergency-closed (attempt {close_attempt}): {close_id}")
-                    closed = True
-                    break
-                else:
-                    print(f"  [WARN] Close attempt {close_attempt} returned no orderId")
-            except Exception as close_err:
-                print(f"  [WARN] Close attempt {close_attempt} failed: {close_err}")
-            time.sleep(2)
-        if not closed:
-            print(f"  [CRITICAL] EMERGENCY CLOSE ALSO FAILED AFTER 3 ATTEMPTS")
-            print(f"  [CRITICAL] MANUAL INTERVENTION REQUIRED ON KUCOIN NOW")
-        if TELEGRAM_OK:
-            try:
-                from telegram_notify import system_error
-                msg = (f"STOP LOSS FAILED on {direction} {symbol} @ ${filled_price:,.2f}. "
-                       f"Emergency close {'succeeded' if closed else 'ALSO FAILED — CHECK KUCOIN NOW'}.")
-                system_error("kucoin_executor", msg, config)
-            except Exception:
-                pass
-        # Mark this hour as filled to prevent immediate re-entry loop
-        try:
-            import live_signal_monitor as _lsm
-            _lsm.run_monitor_loop._filled_hour = int(
-                __import__("time").strftime("%H", __import__("time").gmtime())
-            )
-        except Exception:
-            pass
-        return False
+    try:
+        stop_order_id = place_stop_order(config, kc_symbol, stop_side, contracts, stop_price)
+        print(f"  [OK] Stop placed: {stop_order_id}")
+    except Exception as e:
+        print(f"  [WARN] Stop order failed: {e} — CLOSE MANUALLY ON KUCOIN")
+        stop_order_id = None
 
     # ── Calculate TP levels — use PAVP targets if available ──
     stop_dist = abs(filled_price - stop_price)

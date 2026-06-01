@@ -622,14 +622,28 @@ def execute_trade(config, signal, state):
             tp3 = round(round((filled_price - stop_dist * 2.0) * 10) / 10, 1)
         print(f"  [TP] Using ATR fallback targets: {tp1} / {tp2} / {tp3}")
 
-    tp1_qty = max(1, round(contracts * TP1_PCT))
-    tp2_qty = max(1, round(contracts * TP2_PCT))
-    tp3_qty = contracts - tp1_qty - tp2_qty
+    # ── TP quantity split — handle low contract counts ──────
+    # With < 3 contracts the 35/30 split produces invalid qtys
+    # Use single full-size TP at best target when contracts < 3
+    tp_side = "sell" if direction == "LONG" else "buy"
+    if contracts < 3:
+        tp_levels = [("TP1", contracts, tp1)]
+        print(f"  [TP] {contracts} contract(s) — single TP at ${tp1:,.2f}")
+    else:
+        tp1_qty = max(1, round(contracts * TP1_PCT))
+        tp2_qty = max(1, round(contracts * TP2_PCT))
+        tp3_qty = contracts - tp1_qty - tp2_qty
+        tp_levels = [
+            ("TP1", tp1_qty, tp1),
+            ("TP2", tp2_qty, tp2),
+        ]
+        if tp3_qty >= 1:
+            tp_levels.append(("TP3", tp3_qty, tp3))
+        print(f"  [TP] {contracts} contracts — split TP1={tp1_qty}/TP2={tp2_qty}/TP3={tp3_qty}")
 
     # ── Place TP limit orders ────────────────────────────────
-    tp_side    = "sell" if direction == "LONG" else "buy"
     tp_orders  = {}
-    for label, qty, price in [("TP1", tp1_qty, tp1), ("TP2", tp2_qty, tp2), ("TP3", tp3_qty, tp3)]:
+    for label, qty, price in tp_levels:
         if qty < 1:
             continue
         try:
@@ -966,6 +980,15 @@ def on_signal(signal_data):
         return {"executed": False, "reason": "No valid signal direction"}
 
     pos_data  = signal_data.get("positions", {})
+
+    # ── OI-based risk tiering ──
+    # 5% risk when OI RISING or RISING_ELEVATED (high conviction)
+    # 1% risk for all other OI conditions (standard)
+    oi_state   = signal_data.get("oi_state", signal_data.get("decision", {}).get("risk_state", ""))
+    hc_states  = ["RISING", "RISING_ELEVATED", "LOW"]  # HIGH_CONVICTION conditions
+    risk_pct   = 0.05 if any(s in str(oi_state).upper() for s in ["RISING", "RISING_ELEVATED"]) else 0.01
+    print(f"  OI state: {oi_state} → risk_pct={risk_pct*100:.0f}%")
+
     signal = {
         "signal_id":   f"AUTO-{int(time.time())}",
         "symbol":      signal_data.get("symbol", "BTCUSDT"),
@@ -973,7 +996,6 @@ def on_signal(signal_data):
         "direction":   "LONG" if "LONG" in direction else "SHORT",
         "entry_price": signal_data.get("price", 0),
         "stop_loss":   pos_data.get("stop_price", 0) or (
-            # Fallback: calculate stop from ATR if server didn't return one
             round(signal_data.get("price", 0) * (0.994 if "LONG" in direction else 1.006), 2)
         ),
         "target_1":    None,
@@ -981,6 +1003,7 @@ def on_signal(signal_data):
         "target_3":    None,
         "grade":       d.get("setup_grade", "-"),
         "confidence":  d.get("confidence", 0),
+        "risk_pct":    risk_pct,
     }
 
     # Extract targets
@@ -1098,15 +1121,13 @@ def check_for_new_signal(config, state):
         print(f"  [SKIP] No signal — {direction}")
         return
 
-    # Check session hours per active strategy
-    import json as _j
-    _st = _j.load(open("/root/trading/automation_state.json"))
-    _strat = _st.get("strategy", "BTC_H")
-    _hrs = {"BTC_H":[12,14],"BTC_B":[7,12,14,18],"BTC_G":[7,12,14,18],"BTC_L":[7,12,14]}
-    _allowed = _hrs.get(_strat, [12,14])
-    _h_now = int(__import__("time").strftime("%H", __import__("time").gmtime()))
-    if _h_now not in _allowed:
-        print(f"  [SKIP] Hour {_h_now} not in {_strat} hours {_allowed}")
+    # ── Session hours — single source of truth ──────────────
+    # All strategies use hours [7, 12, 14, 18] UTC
+    # Grade A+B required for all hours (thresh=55)
+    ALLOWED_HOURS = [7, 12, 14, 18]
+    _h_now = int(time.strftime("%H", time.gmtime()))
+    if _h_now not in ALLOWED_HOURS:
+        print(f"  [SKIP] Hour {_h_now} not in allowed hours {ALLOWED_HOURS}")
         return
 
     # We are in a session hour — check if signal is valid
@@ -1146,18 +1167,24 @@ def check_for_new_signal(config, state):
         _last_signal_hour = int(time.strftime("%H", time.gmtime()))
         try:
             h_now = int(time.strftime("%H", time.gmtime()))
-            ep_sig = data.get("price", 0)
+            ep_sig  = data.get("price", 0)
             pos_sig = data.get("positions", {})
-            sl_sig  = pos_sig.get("stop_price", 0) or round(ep_sig*0.98, 2)
+            sl_sig  = pos_sig.get("stop_price", 0) or round(ep_sig*0.994, 2)
             sd_sig  = abs(ep_sig - sl_sig)
             is_l    = "LONG" in direction
+            # Use actual PAVP targets if available, else ATR fallback
+            tgts    = data.get("targets", [])
+            valid_t = sorted(
+                [t["price"] for t in tgts if (is_l and t["price"] > ep_sig) or (not is_l and t["price"] < ep_sig)],
+                key=lambda x: x if is_l else -x
+            )
+            tp1_sig = valid_t[0] if len(valid_t) > 0 else round(ep_sig + sd_sig if is_l else ep_sig - sd_sig, 2)
+            tp2_sig = valid_t[1] if len(valid_t) > 1 else round(ep_sig + sd_sig*1.5 if is_l else ep_sig - sd_sig*1.5, 2)
+            tp3_sig = valid_t[2] if len(valid_t) > 2 else round(ep_sig + sd_sig*2.0 if is_l else ep_sig - sd_sig*2.0, 2)
             signal_detected(
                 direction, grade, confidence,
-                ep_sig, sl_sig,
-                round(ep_sig + sd_sig if is_l else ep_sig - sd_sig, 2),
-                round(ep_sig + sd_sig*1.5 if is_l else ep_sig - sd_sig*1.5, 2),
-                round(ep_sig + sd_sig*2.0 if is_l else ep_sig - sd_sig*2.0, 2),
-                state.get("strategy","BTC_G"), h_now, True, config
+                ep_sig, sl_sig, tp1_sig, tp2_sig, tp3_sig,
+                state.get("strategy","BTC_H"), h_now, True, config
             )
         except Exception:
             pass
@@ -1187,10 +1214,11 @@ def run_monitor_loop():
             armed  = state.get("armed", False)
             active = len(state.get("active_trades", {}))
             h      = int(time.strftime('%H', time.gmtime()))
-            in_sess= h in [7, 12, 14, 18]
+            ALLOWED_HOURS = [7, 12, 14, 18]
+            in_sess= h in ALLOWED_HOURS
             print(f"\n  [Cycle {cycle}] {time.strftime('%H:%M:%S UTC', time.gmtime())} | "
                   f"Armed: {'YES' if armed else 'NO'} | "
-                  f"Session: {'YES' if in_sess else 'NO (next: 7/12/14/18 UTC)'} | "
+                  f"Session: {'YES' if in_sess else f'NO (next: {ALLOWED_HOURS} UTC)'} | "
                   f"Active trades: {active}", flush=True)
 
             # Daily position update at 12:00 UTC (once only, not every cycle)
@@ -1224,11 +1252,11 @@ def run_monitor_loop():
             if not hasattr(run_monitor_loop, '_filled_hour'):
                 run_monitor_loop._filled_hour = -1
             # Reset when we leave the session hour
-            if h not in [7, 12, 14, 18]:
+            if h not in ALLOWED_HOURS:
                 run_monitor_loop._filled_hour = -1
             # Only check if in session and haven't filled this hour
             active = len(state.get("active_trades", {}))
-            if h in [7, 12, 14, 18] and run_monitor_loop._filled_hour != h:
+            if h in ALLOWED_HOURS and run_monitor_loop._filled_hour != h:
                 prev_active = active
                 check_for_new_signal(config, state)
                 # Reload state after execution attempt

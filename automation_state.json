@@ -3,7 +3,7 @@
   "active_trades": {},
   "leverage": 10,
   "risk_pct": 0.02,
-  "last_signal": null,
+  "last_signal": 1780315203,
   "min_confidence": 60,
   "strategy": "BTC_H"
 }

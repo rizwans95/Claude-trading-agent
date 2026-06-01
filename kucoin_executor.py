@@ -235,37 +235,31 @@ def place_limit_order(config, kucoin_symbol, side, qty, price, reduce_only=False
 
 def place_stop_order(config, kucoin_symbol, side, qty, stop_price, reduce_only=True):
     """
-    Place a stop-loss order using KuCoin /api/v1/st-orders endpoint.
-    Uses triggerStopDownPrice for LONG stop (sell side)
-    Uses triggerStopUpPrice  for SHORT stop (buy side)
+    Place a stop-loss market order using /api/v1/orders with stop params.
+    LONG stop (side=sell): stop="down" — triggers when price falls to stop_price
+    SHORT stop (side=buy):  stop="up"  — triggers when price rises to stop_price
     Triggers on mark price (TP).
     """
     import uuid
-    stop_px = str(round(round(stop_price * 10) / 10, 1))  # BTC tick = 0.1
-
-    # For LONG (side=sell): stop triggers when price falls to stop_price
-    # For SHORT (side=buy): stop triggers when price rises to stop_price
-    if side == "sell":
-        trigger_key = "triggerStopDownPrice"
-    else:
-        trigger_key = "triggerStopUpPrice"
-
+    stop_px   = str(round(round(stop_price * 10) / 10, 1))  # BTC tick = 0.1
+    stop_dir  = "down" if side == "sell" else "up"
     body = {
-        "clientOid":    str(uuid.uuid4()),
-        "symbol":       kucoin_symbol,
-        "side":         side,
-        "type":         "market",
-        "size":         int(qty),
-        "reduceOnly":   reduce_only,
-        "marginMode":   "ISOLATED",
-        "positionSide": "BOTH",
-        "stopPriceType": "TP",   # mark price trigger
-        trigger_key:    stop_px,
+        "clientOid":     str(uuid.uuid4()),
+        "symbol":        kucoin_symbol,
+        "side":          side,
+        "type":          "market",
+        "stop":          stop_dir,
+        "stopPrice":     stop_px,
+        "stopPriceType": "TP",
+        "size":          int(qty),
+        "reduceOnly":    reduce_only,
+        "marginMode":    "ISOLATED",
+        "positionSide":  "BOTH",
     }
-    result = api_post(config, "/api/v1/st-orders", body)
+    result   = api_post(config, "/api/v1/orders", body)
     order_id = result.get("orderId")
     if not order_id:
-        raise RuntimeError(f"st-orders API returned no orderId: {result}")
+        raise RuntimeError(f"stop order returned no orderId: {result}")
     return order_id
 
 
@@ -282,7 +276,7 @@ def cancel_order(config, order_id):
 def cancel_stop_order(config, order_id):
     """Cancel a stop order using new st-orders endpoint."""
     try:
-        api_delete(config, f"/api/v1/st-orders/{order_id}")
+        api_delete(config, f"/api/v1/orders/{order_id}")
         return True
     except Exception as e:
         print(f"  [Cancel stop {order_id} failed: {e}]")
@@ -292,7 +286,8 @@ def cancel_stop_order(config, order_id):
 def cancel_all_stop_orders(config, kucoin_symbol):
     """Cancel all stop orders for a symbol using new st-orders endpoint."""
     try:
-        api_delete(config, f"/api/v1/st-orders?symbol={kucoin_symbol}")
+        api_delete(config, f"/api/v1/orders?symbol={kucoin_symbol}&stop=down")
+        api_delete(config, f"/api/v1/orders?symbol={kucoin_symbol}&stop=up")
         return True
     except Exception as e:
         print(f"  [Cancel all stops failed: {e}]")
@@ -1141,9 +1136,9 @@ def check_for_new_signal(config, state):
         return
 
     print(f"  [SIGNAL] {direction} | Grade {grade} | Conf {confidence}% | In session: {in_session}")
-    # Mark that a signal was detected this cycle so monitor loop can lock the hour
+    # Flag that execution was attempted — used to lock hour on failure
     try:
-        _s = load_state(); _s["last_signal"] = int(time.time()); save_state(_s)
+        _s = load_state(); _s["last_signal_attempted"] = True; save_state(_s)
     except Exception: pass
     # Telegram: signal detected — only once per session hour
     global _last_signal_hour
@@ -1236,22 +1231,19 @@ def run_monitor_loop():
             if h in [7, 12, 14, 18] and run_monitor_loop._filled_hour != h:
                 prev_active = active
                 check_for_new_signal(config, state)
-                # Reload state to check if trade was added
+                # Reload state after execution attempt
                 state = load_state()
                 new_active = len(state.get("active_trades", {}))
                 if new_active > prev_active:
                     # Trade opened successfully
                     run_monitor_loop._filled_hour = h
-                    print(f"  [HOUR LOCK] Trade opened — locking hour {h} from further signals")
-                else:
-                    # No trade opened — check if a signal was detected (execution attempted)
-                    # We lock the hour regardless of success to prevent re-entry loops.
-                    # The signal engine will re-evaluate fresh on the next session hour.
-                    # This is the critical fix: ANY execution attempt locks the hour.
-                    sig_state = load_state()
-                    if sig_state.get("last_signal"):
-                        run_monitor_loop._filled_hour = h
-                        print(f"  [HOUR LOCK] Execution attempted — locking hour {h}")
+                    print(f"  [HOUR LOCK] Trade opened — locking hour {h}")
+                elif state.get("last_signal_attempted"):
+                    # Execution was attempted but failed — still lock hour
+                    run_monitor_loop._filled_hour = h
+                    state["last_signal_attempted"] = False
+                    save_state(state)
+                    print(f"  [HOUR LOCK] Execution attempted — locking hour {h}")
 
             # Monitor existing positions every cycle
             state = load_state()

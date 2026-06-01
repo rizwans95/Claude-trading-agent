@@ -1141,6 +1141,10 @@ def check_for_new_signal(config, state):
         return
 
     print(f"  [SIGNAL] {direction} | Grade {grade} | Conf {confidence}% | In session: {in_session}")
+    # Mark that a signal was detected this cycle so monitor loop can lock the hour
+    try:
+        _s = load_state(); _s["last_signal"] = int(time.time()); save_state(_s)
+    except Exception: pass
     # Telegram: signal detected — only once per session hour
     global _last_signal_hour
     if TELEGRAM_OK and int(time.strftime("%H", time.gmtime())) != _last_signal_hour:
@@ -1232,10 +1236,22 @@ def run_monitor_loop():
             if h in [7, 12, 14, 18] and run_monitor_loop._filled_hour != h:
                 prev_active = active
                 check_for_new_signal(config, state)
-                # If a new trade was opened this cycle, mark hour as filled
+                # Reload state to check if trade was added
+                state = load_state()
                 new_active = len(state.get("active_trades", {}))
                 if new_active > prev_active:
+                    # Trade opened successfully
                     run_monitor_loop._filled_hour = h
+                    print(f"  [HOUR LOCK] Trade opened — locking hour {h} from further signals")
+                else:
+                    # No trade opened — check if a signal was detected (execution attempted)
+                    # We lock the hour regardless of success to prevent re-entry loops.
+                    # The signal engine will re-evaluate fresh on the next session hour.
+                    # This is the critical fix: ANY execution attempt locks the hour.
+                    sig_state = load_state()
+                    if sig_state.get("last_signal"):
+                        run_monitor_loop._filled_hour = h
+                        print(f"  [HOUR LOCK] Execution attempted — locking hour {h}")
 
             # Monitor existing positions every cycle
             state = load_state()

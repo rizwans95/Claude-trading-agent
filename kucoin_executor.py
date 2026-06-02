@@ -1081,10 +1081,11 @@ def fetch_latest_signal(state):
 def check_for_new_signal(config, state):
     """
     Check if a new valid signal has fired and execute if armed.
+    If disarmed (paper mode), sends Telegram alerts without placing orders.
     Runs inside the monitor loop.
     """
-    if not state.get("armed"):
-        return
+    armed       = state.get("armed", False)
+    paper_mode  = not armed  # disarmed = paper trade mode
 
     # Don't open new trade if one already active on same symbol
     active = state.get("active_trades", {})
@@ -1157,30 +1158,28 @@ def check_for_new_signal(config, state):
         return
 
     print(f"  [SIGNAL] {direction} | Grade {grade} | Conf {confidence}% | In session: {in_session}")
-    # Flag that execution was attempted — used to lock hour on failure
-    try:
-        _s = load_state(); _s["last_signal_attempted"] = True; save_state(_s)
-    except Exception: pass
-    # Telegram: signal detected — only once per session hour
+
+    # ── Build TP levels for Telegram notification ──────────
+    h_now   = int(time.strftime("%H", time.gmtime()))
+    ep_sig  = data.get("price", 0)
+    pos_sig = data.get("positions", {})
+    sl_sig  = pos_sig.get("stop_price", 0) or round(ep_sig*0.994, 2)
+    sd_sig  = abs(ep_sig - sl_sig)
+    is_l    = "LONG" in direction
+    tgts    = data.get("targets", [])
+    valid_t = sorted(
+        [t["price"] for t in tgts if (is_l and t["price"] > ep_sig) or (not is_l and t["price"] < ep_sig)],
+        key=lambda x: x if is_l else -x
+    )
+    tp1_sig = valid_t[0] if len(valid_t) > 0 else round(ep_sig + sd_sig if is_l else ep_sig - sd_sig, 2)
+    tp2_sig = valid_t[1] if len(valid_t) > 1 else round(ep_sig + sd_sig*1.5 if is_l else ep_sig - sd_sig*1.5, 2)
+    tp3_sig = valid_t[2] if len(valid_t) > 2 else round(ep_sig + sd_sig*2.0 if is_l else ep_sig - sd_sig*2.0, 2)
+
+    # ── Telegram: signal detected — only once per session hour ──
     global _last_signal_hour
-    if TELEGRAM_OK and int(time.strftime("%H", time.gmtime())) != _last_signal_hour:
-        _last_signal_hour = int(time.strftime("%H", time.gmtime()))
+    if TELEGRAM_OK and h_now != _last_signal_hour:
+        _last_signal_hour = h_now
         try:
-            h_now = int(time.strftime("%H", time.gmtime()))
-            ep_sig  = data.get("price", 0)
-            pos_sig = data.get("positions", {})
-            sl_sig  = pos_sig.get("stop_price", 0) or round(ep_sig*0.994, 2)
-            sd_sig  = abs(ep_sig - sl_sig)
-            is_l    = "LONG" in direction
-            # Use actual PAVP targets if available, else ATR fallback
-            tgts    = data.get("targets", [])
-            valid_t = sorted(
-                [t["price"] for t in tgts if (is_l and t["price"] > ep_sig) or (not is_l and t["price"] < ep_sig)],
-                key=lambda x: x if is_l else -x
-            )
-            tp1_sig = valid_t[0] if len(valid_t) > 0 else round(ep_sig + sd_sig if is_l else ep_sig - sd_sig, 2)
-            tp2_sig = valid_t[1] if len(valid_t) > 1 else round(ep_sig + sd_sig*1.5 if is_l else ep_sig - sd_sig*1.5, 2)
-            tp3_sig = valid_t[2] if len(valid_t) > 2 else round(ep_sig + sd_sig*2.0 if is_l else ep_sig - sd_sig*2.0, 2)
             signal_detected(
                 direction, grade, confidence,
                 ep_sig, sl_sig, tp1_sig, tp2_sig, tp3_sig,
@@ -1188,6 +1187,21 @@ def check_for_new_signal(config, state):
             )
         except Exception:
             pass
+
+    # ── Paper mode — log signal but don't execute ───────────
+    if paper_mode:
+        print(f"  [PAPER] Signal logged — system disarmed, no order placed")
+        print(f"  [PAPER] {direction} @ ${ep_sig:,.2f} | SL=${sl_sig:,.2f} | TP1=${tp1_sig:,.2f}")
+        # Lock hour to avoid repeated paper alerts
+        try:
+            _s = load_state(); _s["last_signal_attempted"] = True; save_state(_s)
+        except Exception: pass
+        return
+
+    # ── Live mode — execute trade ────────────────────────────
+    try:
+        _s = load_state(); _s["last_signal_attempted"] = True; save_state(_s)
+    except Exception: pass
     result = on_signal(data)
     if result.get("executed"):
         print(f"  [EXECUTED] {result}")

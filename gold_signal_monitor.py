@@ -48,7 +48,7 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────────────────────
 
-SYMBOL        = "GC=F"          # Yahoo Finance GOLD futures
+SYMBOL        = "GC=F"          # Yahoo Finance GOLD futures (primary working ticker)
 SYMBOL_LABEL  = "XAUUSD"
 TF            = "15m"
 ALLOWED_HOURS = [2, 4, 9, 11, 16, 17, 23]
@@ -75,37 +75,66 @@ LOG_COLUMNS = [
 
 def fetch_gold_15m(bars=200):
     """Fetch last N 15m bars of XAUUSD from Yahoo Finance."""
+    # GC=F (gold futures) is the working ticker — try it first
+    tickers = ["GC=F", "XAUUSD=X", "GLD"]
+    df = None
+    used_ticker = None
+    for ticker in tickers:
+        try:
+            _df = yf.download(ticker, period="5d", interval="15m",
+                              progress=False, auto_adjust=True)
+            if _df is not None and len(_df) >= 50:
+                df = _df
+                used_ticker = ticker
+                break
+        except Exception as e:
+            print(f"  [WARN] Ticker {ticker} failed: {e}")
+            continue
     try:
-        df = yf.download(SYMBOL, period="5d", interval="15m",
-                         progress=False, auto_adjust=True)
         if df is None or len(df) < 50:
+            print(f"  [ERROR] All gold tickers failed or returned insufficient data")
             return None
+
+        # Flatten MultiIndex columns (yfinance returns tuples like ('Close','GC=F'))
         df = df.reset_index()
-        df.columns = [c[0].lower() if isinstance(c, tuple) else c.lower()
-                      for c in df.columns]
+        flat_cols = []
+        for col in df.columns:
+            if isinstance(col, tuple):
+                flat_cols.append(col[0].lower())
+            else:
+                flat_cols.append(str(col).lower())
+        df.columns = flat_cols
+
+        # Rename datetime/date column to time
         for col in ["datetime","date"]:
             if col in df.columns:
                 df = df.rename(columns={col:"time"})
+
         df["time"] = pd.to_datetime(df["time"], utc=True)
         df = df[["time","open","high","low","close","volume"]].dropna()
         df = df.drop_duplicates("time").sort_values("time").reset_index(drop=True)
         return df.tail(bars).reset_index(drop=True)
     except Exception as e:
-        print(f"  [ERROR] fetch_gold_15m: {e}")
+        print(f"  [ERROR] fetch_gold_15m processing: {e}")
         return None
 
 
 def get_current_price():
     """Get current XAUUSD spot price."""
-    try:
-        ticker = yf.Ticker(SYMBOL)
-        info   = ticker.fast_info
-        return float(info.last_price)
-    except Exception:
-        df = fetch_gold_15m(5)
-        if df is not None and len(df) > 0:
-            return float(df["close"].iloc[-1])
-        return None
+    # Try fast_info first for each ticker
+    for t in ["GC=F", "XAUUSD=X"]:
+        try:
+            info = yf.Ticker(t).fast_info
+            price = float(info.last_price)
+            if price and price > 100:  # sanity check — gold > $100
+                return price
+        except Exception:
+            continue
+    # Fallback — use last close from OHLCV data
+    df = fetch_gold_15m(5)
+    if df is not None and len(df) > 0:
+        return float(df["close"].iloc[-1])
+    return None
 
 # ─────────────────────────────────────────────────────────────
 # INDICATORS
@@ -283,7 +312,7 @@ def update_open_trades(df, config):
             print(f"  [WARN] Could not parse trade {trade.get('signal_id')}: {e}")
             continue
 
-        df.at[idx, "bars_held"] = bars_held
+        df.at[idx, "bars_held"] = float(bars_held)
 
         # Check SL hit
         if current_price <= sl:
@@ -460,11 +489,32 @@ def scan_once(config):
     print(f"\n  [{now_utc.strftime('%Y-%m-%d %H:%M UTC')}] GOLD Monitor scan")
     print(f"  {'─'*50}")
 
+    # ── Sync state with CSV on startup ──────────────────────
+    # If CSV has OPEN trade but state lost it, restore from CSV
+    df           = load_log()
+    monitor_state = load_state()
+    open_in_csv  = df[df["status"] == "OPEN"]
+    if len(open_in_csv) > 0 and monitor_state.get("open_trade") is None:
+        row = open_in_csv.iloc[-1]
+        monitor_state["open_trade"] = {
+            "signal_id":   str(row["signal_id"]),
+            "entry_price": float(row["entry_price"]),
+            "stop_loss":   float(row["stop_loss"]),
+            "take_profit": float(row["take_profit"]),
+        }
+        save_state(monitor_state)
+        print(f"  [SYNC] Restored open_trade from CSV: {row['signal_id']}")
+
     # Update open trades first
-    df = load_log()
     df, updated = update_open_trades(df, config)
     if updated > 0:
         save_log(df)
+        # Clear open_trade from state if it was closed
+        still_open = df[df["status"] == "OPEN"]
+        if len(still_open) == 0:
+            monitor_state = load_state()
+            monitor_state["open_trade"] = None
+            save_state(monitor_state)
         print(f"  Updated {updated} open trade(s)")
 
     # Check if we already have an open trade

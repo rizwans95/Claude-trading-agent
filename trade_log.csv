@@ -1,1 +1,9 @@
-signal_id,timestamp,utc_hour,strategy,symbol,timeframe,mode,direction,grade,confidence,in_session,wme_signal,cvd_signal,in_lvn,entry_price,stop_loss,stop_pct,target_1,target_2,target_3,spot_qty,fut_qty_2x,fut_margin_2x,fut_qty_5x,fut_margin_5x,fut_qty_10x,fut_margin_10x,fut_qty_20x,fut_margin_20x,fut_qty_50x,fut_margin_50x,fut_qty_100x,fut_margin_100x,account_balance,balance_source,status,exit_price,exit_time,r_multiple,pnl_usdt,running_wins,running_losses,running_wr,running_equity,notes
+signal_id,timestamp,utc_hour,strategy,symbol,direction,entry_price,stop_price,contracts,balance_at_entry,risk_pct,status,exit_price,exit_time,r_multiple,pnl_usdt,realized_pnl
+AUTO-1780383729,2026-06-02 07:02,7,BTC_H,BTCUSDT,SHORT,69892.8,70679.3,1,22.28,0.02,WIN,69130.3,2026-06-02 12:35,0.935,0.72,0.72
+AUTO-1780408856,2026-06-02 14:01,14,BTC_H,BTCUSDT,SHORT,68724.5,69438.9,1,23.01,0.02,WIN,68072.3,2026-06-02 14:24,1.067,0.62,0.62
+AUTO-1780581673,2026-06-04 14:01,14,BTC_H,BTCUSDT,LONG,64175.3,62985.6,1,23.64,0.02,LOSS,62985.6,2026-06-05 02:30,-1.041,-1.59,-1.59
+AUTO-1780642828,2026-06-05 07:00,7,BTC_H,BTCUSDT,SHORT,61950.8,62619.8,1,22.04,0.02,WIN,61282.0,2026-06-05 14:04,0.998,1.33,1.33
+AUTO-1780668318,2026-06-05 14:05,14,BTC_H,BTCUSDT,SHORT,60681.6,61350.6,1,23.37,0.02,WIN,60012.6,2026-06-05 18:53,0.918,1.4,1.4
+AUTO-1780730023,2026-06-06 07:13,7,BTC_H,BTCUSDT,LONG,60967.3,60032.4,1,24.77,0.02,WIN,62240.4,2026-06-07 07:54,0.979,1.27,1.27
+AUTO-1780818955,2026-06-07 07:56,7,BTC_H,BTCUSDT,LONG,62240.4,61372.0,1,26.04,0.02,LOSS,61372.0,2026-06-07 12:43,-0.831,-0.7,-0.7
+AUTO-1780927240,2026-06-08 14:00,14,AUTO,BTCUSDT,LONG,63740.1,62689.7886,1,25.2661109904,0.01,LOSS,62698.1,2026-06-09T00:30:28.995590+00:00,-0.992,-0.25,
